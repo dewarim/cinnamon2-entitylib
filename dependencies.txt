@@ -1,0 +1,16 @@
+Current Dependencies:
+
+required to build:
+- CinnamonUtils
+- CinnamonBase
+- Hibernate 3
+- Hibernate Annotations
+
+Additional:
+Logback (logback-core*.jar and logback-classic*.jar)
+slf4j (slf4j-api*.jar)
+dom4j
+Apache Lucene (http://lucene.apache.org)
+	lucene-core.3.5.0.jar (or later, unless API changed)
+	lucene-xml-query-parser-3.5.0
+	lucene-regex-3.5.0

@@ -1,0 +1,18 @@
+Create the class itself, for example: 
+	server.i18n.Locale
+Add a generic DAO-class (server.dao.LocaleDAO )
+Add a Hibernate specific DAO implementation (server.dao.LocaleDAOHibernate)
+Externalize named queries to server.Acl.
+
+The LocaleDAO has to be registered with the server.dao.DAOFactory class.
+The Hibernate-DAO has to be registered with the server.dao.HibernateDAOFactory class.
+
+Add <class>server.i18n.Locale</class> to the META-INF/persistence.xml
+If your persistence_unit is not configured to automatically update the database,
+you have to add the new table manually.
+
+Create code that utilizes the new class.
+Extend the CinnamonAPI if necessary.
+Write code to test the implementation.
+
+  
