@@ -7,6 +7,7 @@ import server.data.UploadedFile;
 import server.global.Conf;
 import server.global.ConfThreadLocal;
 import utils.FileKeeper;
+import utils.HibernateSession;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -123,12 +124,26 @@ public class ContentStore {
      * @param osd the OSD whose content is going to be deleted.
      */
     public static void deleteObjectFile(ObjectSystemData osd) {
-        if (osd.getContentPath() == null) {
-            return;
-        }
-        File contentFile = new File(osd.getContentPath());
-        if (contentFile.exists()) { // cannot delete non-existent file
-            FileKeeper.getInstance().addFileForDeletion(contentFile);
+        Logger log = LoggerFactory.getLogger(ContentStore.class);
+        String repository = HibernateSession.getLocalRepositoryName();
+        Conf conf = ConfThreadLocal.getConf();
+        String contentPath = osd.getContentPath();
+        if (contentPath != null && contentPath.length() > 0) {
+            File contentFile = new File(conf.getDataRoot() + File.separator +
+                    repository + File.separator + contentPath);
+            log.debug("deleteContent: " + contentFile.getAbsolutePath());
+
+            if (contentFile.exists()) {
+                log.debug("content exists, setting file up for later deletion.");
+                FileKeeper fileKeeper = FileKeeper.getInstance();
+                // note: it seems like fileKeeper is currently not doing anything,
+                // so as a workaround I use deleteOnExit() here.
+                // TODO: refactor FileKeeper to actually do stuff.
+                fileKeeper.addFileForDeletion(contentFile);
+                contentFile.deleteOnExit();
+            } else {
+                log.warn("content file " + contentFile.getAbsolutePath() + "does not exist.");
+            }
         }
     }
 
