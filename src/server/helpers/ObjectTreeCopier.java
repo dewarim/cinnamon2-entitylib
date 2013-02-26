@@ -14,6 +14,7 @@ import utils.HibernateSession;
 import javax.persistence.EntityManager;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -133,6 +134,9 @@ public class ObjectTreeCopier {
         }
         copy.setType(osd.getType());
         copy.setVersion(osd.getVersion());
+
+        fixLatestHeadAndBranch(copy);
+        
         ObjectSystemData persistentCopy = osdDao.makePersistent(copy);
         copyCache.put(osd, persistentCopy);
         return persistentCopy;
@@ -225,6 +229,8 @@ public class ObjectTreeCopier {
             copy.setRoot(checkCopyCache(osd.getRoot()));
         }
 
+        fixLatestHeadAndBranch(copy);
+        
         ObjectSystemData persistentCopy = osdDao.makePersistent(copy);
         osd.copyContent(persistentCopy);
         copyResult.addObject(persistentCopy);
@@ -232,6 +238,15 @@ public class ObjectTreeCopier {
         return persistentCopy;
     }
 
+    void fixLatestHeadAndBranch(ObjectSystemData osd){
+        if(osd == null){
+            return;
+        }
+        ObjectSystemDataDAO oDao = daoFactory.getObjectSystemDataDAO(em);
+        List<ObjectSystemData> children = oDao.findAllByPredecessorID(osd);
+        ObjectSystemData.fixLatestHeadAndBranch(osd, children);
+    }
+    
     /**
      * The ObjectTreeCopier tracks all new objects in a CopyResult, so users can retrieve a list of all new objects.
      * @return the copyResult containing all new objects.

@@ -1501,4 +1501,38 @@ public class ObjectSystemData
         result = 31 * result + (version != null ? version.hashCode() : 0);
         return result;
     }
+
+    public static void fixLatestHeadAndBranch(ObjectSystemData target, List<ObjectSystemData> children) {
+        ObjectSystemData predecessor = target.getPredecessor();
+        Boolean hasChildren = children.size() > 0;
+        if (hasChildren) {
+            // if target has children: it is not latestBranch.
+            target.setLatestBranch(false);
+            // target *may* be latestHead if the previous head has been deleted 
+            // and only child branches remain.
+            Boolean isHead = true;
+            for (ObjectSystemData child : children) {
+                if (child.getVersion().matches("^\\d+$")) {
+                    isHead = false;
+                    break;
+                }
+            }
+            target.setLatestHead(isHead);
+        }
+        else {
+            // target no children: it is latestBranch
+            target.setLatestBranch(true);
+            if (target.getVersion().matches("^\\d+$")) {
+                target.setLatestHead(true);
+                if (predecessor != null && predecessor.getLatestHead()) {
+                    predecessor.setLatestHead(false);
+                }
+            }
+        }
+
+        // the predecessor cannot be latest branch, that has to be this (or a descendant) node.
+        if (predecessor != null && predecessor.getLatestBranch()) {
+            predecessor.setLatestBranch(false);
+        }
+    }
 }
