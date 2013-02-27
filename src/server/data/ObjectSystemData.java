@@ -1526,6 +1526,7 @@ public class ObjectSystemData
                 target.setLatestHead(true);
                 if (predecessor != null && predecessor.getLatestHead()) {
                     predecessor.setLatestHead(false);
+                    predecessor.indexOk = null;
                 }
             }
         }
@@ -1533,6 +1534,7 @@ public class ObjectSystemData
         // the predecessor cannot be latest branch, that has to be this (or a descendant) node.
         if (predecessor != null && predecessor.getLatestBranch()) {
             predecessor.setLatestBranch(false);
+            predecessor.indexOk = null;
         }
     }
 }

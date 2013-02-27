@@ -161,6 +161,8 @@ public class LuceneBridge {
     public void addObjectToIndex(Indexable indexable) {
         try {
             try {
+                // always try to remove an object, as other code may have already called this method
+                removeObjectFromIndex(indexable);
                 Document doc = new Document();
                 log.debug("store standard fields");
                 storeStandardFields(indexable, doc);
