@@ -458,7 +458,8 @@ public class Folder
 
 	/**
 	 * Add the folder as XML Element "folder" to the parameter Element.
-	 * @param root
+	 * @param root the element to which the folder element is appended as a child
+     * @return the element which was added to the root param.
 	 */
 	public Element toXmlElement(Element root){
 		Element folder = root.addElement("folder");
