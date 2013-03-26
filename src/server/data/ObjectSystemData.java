@@ -386,7 +386,7 @@ public class ObjectSystemData
         /*
            * Set language to language_id or to 'und' if language is null.
            */
-        log.debug("set language");
+            log.debug("set language");
         LanguageDAO langDao = daoFactory.getLanguageDAO(em);
         if (cmd.containsKey("language_id")) {
             Long langId = ParamParser.parseLong((String) cmd.get("language_id"),
@@ -1433,6 +1433,15 @@ public class ObjectSystemData
         return metaset;
     }
 
+    public Metaset fetchMetaset(String name, Boolean autocreate){
+        Metaset metaset = fetchMetaset(name);
+        if( (metaset == null) && autocreate){
+            MetasetService ms = new MetasetService();
+            MetasetTypeDAO mtDao = daoFactory.getMetasetTypeDAO(HibernateSession.getLocalEntityManager());            
+            metaset = ms.createOrUpdateMetaset(this, mtDao.findByName(name), null, WritePolicy.BRANCH);
+        }
+        return metaset;
+    }
 
     /**
      * You can add a config entry to define formats that can be parsed by XML/XPath based IndexItems.
