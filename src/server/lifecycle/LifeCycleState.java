@@ -169,7 +169,7 @@ public class LifeCycleState implements Serializable {
         if (newState.checkEnteringObject(osd, config)) {
             newState.enter(osd, config);
             osd.setState(nextState);
-            osd.setIndexOk(null);
+            osd.updateIndex();
         }
         else {
             throw new CinnamonException("error.enter.lifecycle");

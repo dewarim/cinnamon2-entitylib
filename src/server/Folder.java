@@ -989,4 +989,8 @@ public class Folder
         result = 31 * result + (owner != null ? owner.hashCode() : 0);
         return result;
     }
+
+    public void updateIndex(){
+        indexOk = null;
+    }
 }

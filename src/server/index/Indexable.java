@@ -64,4 +64,10 @@ public interface Indexable {
 	void setIndexed(Date date);
 
     Boolean hasXmlContent();
+
+    /**
+     * Schedule the object to be updated by the background index thread at the next opportunity.
+     */
+    void updateIndex();
+    
 }

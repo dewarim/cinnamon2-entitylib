@@ -84,7 +84,7 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
                             validator.validateCreateFolder(parent);
                         }
                         Folder newFolder = new Folder(seg, null, parent.getAcl(), parent, parent.getOwner(), parent.getType() );
-                        newFolder.setIndexOk(null); // so the IndexServer will index it.
+                        newFolder.updateIndex();
                         makePersistent(newFolder);
                         ret.add(newFolder);
                         parent = newFolder;
@@ -266,9 +266,9 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
      * @param folder a folder who will be re-indexed along with its content (recursively).
      */
     void resetIndexOnFolderContent(Folder folder){
-        folder.setIndexOk(null);
+        folder.updateIndex();
         for(ObjectSystemData osd : getFolderContent(folder, false)){
-            osd.setIndexOk(null);
+            osd.updateIndex();
         }
         for(Folder childFolder : getSubfolders(folder)){
             resetIndexOnFolderContent(childFolder);

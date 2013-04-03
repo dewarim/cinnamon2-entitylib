@@ -80,7 +80,8 @@ public class ObjectSystemData
 
     @Column(name = "index_ok",
             nullable = true)
-    private Boolean indexOk = true; // a new object should always be valid and indexed.
+    // new objects will be indexed by the background index thread.
+    private Boolean indexOk = null; 
 
     @OneToOne
     @JoinColumn(name = "pre_id",
@@ -1535,7 +1536,7 @@ public class ObjectSystemData
                 target.setLatestHead(true);
                 if (predecessor != null && predecessor.getLatestHead()) {
                     predecessor.setLatestHead(false);
-                    predecessor.indexOk = null;
+                    predecessor.updateIndex();
                 }
             }
         }
@@ -1543,7 +1544,12 @@ public class ObjectSystemData
         // the predecessor cannot be latest branch, that has to be this (or a descendant) node.
         if (predecessor != null && predecessor.getLatestBranch()) {
             predecessor.setLatestBranch(false);
-            predecessor.indexOk = null;
+            predecessor.updateIndex();
         }
     }
+
+    public void updateIndex(){
+        indexOk = null;
+    }
+    
 }
