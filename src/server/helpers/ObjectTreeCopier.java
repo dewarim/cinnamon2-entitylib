@@ -135,9 +135,8 @@ public class ObjectTreeCopier {
         copy.setType(osd.getType());
         copy.setVersion(osd.getVersion());
 
-        fixLatestHeadAndBranch(copy);
-        
         ObjectSystemData persistentCopy = osdDao.makePersistent(copy);
+        fixLatestHeadAndBranch(copy);
         copyCache.put(osd, persistentCopy);
         return persistentCopy;
     }
