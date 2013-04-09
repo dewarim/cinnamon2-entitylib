@@ -31,6 +31,7 @@ import server.data.ContentStore;
 import server.data.ObjectSystemData;
 import server.exceptions.CinnamonException;
 import server.helpers.ObjectTreeCopier;
+import server.index.IndexJob;
 import server.interfaces.Repository;
 import server.references.Link;
 import server.references.LinkService;
@@ -214,16 +215,11 @@ public class ObjectSystemDataDAOHibernate extends
     }
 
     @SuppressWarnings("unchecked")
-	public List<ObjectSystemData> findIndexTargets(Integer maxResults){
-		Query q = getSession().createNamedQuery("findObjectIndexTargets");
+	public List<IndexJob> findIndexTargets(Integer maxResults){
+		Query q = getSession().createNamedQuery("findIndexTargets");
+        q.setParameter("indexableClass", ObjectSystemData.class);
 		q.setMaxResults(maxResults);
 		return q.getResultList();
-	}
-
-	@Override
-	public Integer prepareReIndex() {
-		Query q = getSession().createNamedQuery("prepareOSD_ReIndex");
-		return q.executeUpdate();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -363,7 +359,7 @@ public class ObjectSystemDataDAOHibernate extends
 		Folder parent = folderDAO.get(parentId);
 
 		// TODO: use DAO
-		Query q = getSession().createQuery("select o from ObjectSystemData o where parent=:parent "+versionPred);
+		Query q = getSession().createQuery("select o from ObjectSystemData o where parent=:parent "+versionPred+" order by id");
     	q.setParameter("parent", parent);
     	@SuppressWarnings("unchecked")
     	List<ObjectSystemData> results = q.getResultList();

@@ -35,6 +35,7 @@ import server.global.PermissionName;
 import server.helpers.MetasetService;
 import server.helpers.ObjectTreeCopier;
 import server.i18n.Language;
+import server.index.IndexJob;
 import server.index.Indexable;
 import server.interfaces.IMetasetJoin;
 import server.interfaces.IMetasetOwner;
@@ -78,11 +79,6 @@ public class ObjectSystemData
             nullable = false)
     private String name = "";
 
-    @Column(name = "index_ok",
-            nullable = true)
-    // new objects will be indexed by the background index thread.
-    private Boolean indexOk = null; 
-
     @OneToOne
     @JoinColumn(name = "pre_id",
             nullable = true)
@@ -125,11 +121,6 @@ public class ObjectSystemData
     @Column(name = "created",
             nullable = false)
     private Date created = new Date();
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "indexed",
-            nullable = true)
-    private Date indexed = null;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "modified",
@@ -722,14 +713,6 @@ public class ObjectSystemData
         this.created = created;
     }
 
-    public Date getIndexed() {
-        return indexed;
-    }
-
-    public void setIndexed(Date indexed) {
-        this.indexed = indexed;
-    }
-
     public Date getModified() {
         return modified;
     }
@@ -811,7 +794,6 @@ public class ObjectSystemData
         twin.setCreated(Calendar.getInstance().getTime());
         twin.setCreator(getCreator());
         twin.setFormat(getFormat());
-        //		twin.setIndexed(null); // must be "now()", or IndexServer will do bad things.
         twin.setLanguage(getLanguage());
         twin.setLatestBranch(getLatestBranch());
         twin.setLatestHead(getLatestHead());
@@ -847,49 +829,10 @@ public class ObjectSystemData
         this.language = language;
     }
 
-    // this is now done via Lifecycles by directly setting procstate with constants in the WorkflowAPI.
-//    /**
-//     * Set the objects procstate status to _done or _todo.
-//     */
-//    public void setFinished(boolean done) {
-//        log.debug("setting procstate to finished (_done).");
-//        if (done) {
-//            setProcstate("_done");
-//        }
-//        else {
-//            setProcstate("_todo");
-//            /*
-//                * note that setReadyForValidation also may set the state to _todo.
-//                * This is okay, since an unfinished task is always todo,
-//                * (unless ready for validation...)
-//                */
-//        }
-//    }
-
     public void updateAccess(User user) {
         setModifier(user);
         setModified(Calendar.getInstance().getTime());
     }
-
-//    @Transient
-//    public boolean isFinished() { // TODO: is this really needed by some future workflow class?
-//        return getProcstate().equals("_done");
-//    }
-
-//    @Transient           // TODO: is this really needed by some future workflow class?
-//    public void setReadyForValidation(boolean ready) {
-//        if (ready) {
-//            setProcstate("_validate_task");
-//        }
-//        else {
-//            setProcstate("_todo");
-//        }
-//    }
-
-//    @Transient             // TODO: is this really needed by some future workflow class?
-//    public boolean isReadyForValidation() {
-//        return getProcstate().equals("_validate_task");
-//    }
 
     public Document toXML() {
         Document doc = DocumentHelper.createDocument();
@@ -1133,26 +1076,6 @@ public class ObjectSystemData
                 repositoryName + File.separator + getContentPath();
 //        log.debug("fullContentPath: "+fullContentPath);
         return fullContentPath;
-    }
-
-    /**
-     * @return the indexStatus
-     */
-    public Boolean getIndexOk() {
-        return indexOk;
-    }
-
-    /**
-     * Set the index status, true means indexing was completed successfully, false means
-     * indexing has failed. If indexOk is null, this object has not been indexed yet (or
-     * it is scheduled to be indexed as soon as possible, provided the IndexServer is running,
-     * which can be configured by setting {@code <startIndexServer>true</startIndexServer>}
-     * in the cinnamon_config.xml).
-     *
-     * @param indexOk the index status
-     */
-    public void setIndexOk(Boolean indexOk) {
-        this.indexOk = indexOk;
     }
 
     public void copyContent(String repositoryName, ObjectSystemData copy) {
@@ -1549,7 +1472,14 @@ public class ObjectSystemData
     }
 
     public void updateIndex(){
-        indexOk = null;
+        EntityManager em = HibernateSession.getLocalEntityManager();
+        IndexJobDAO jobDAO = daoFactory.getIndexJobDAO(em);
+        IndexJob indexJob = new IndexJob(this);
+        jobDAO.makePersistent(indexJob);
     }
     
+    @Override
+    public Long myId(){
+        return id;
+    }
 }

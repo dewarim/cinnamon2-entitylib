@@ -35,6 +35,7 @@ import server.data.Validator;
 import server.exceptions.CinnamonConfigurationException;
 import server.exceptions.CinnamonException;
 import server.global.Constants;
+import server.index.IndexJob;
 import server.references.Link;
 import utils.ParamParser;
 
@@ -84,8 +85,8 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
                             validator.validateCreateFolder(parent);
                         }
                         Folder newFolder = new Folder(seg, null, parent.getAcl(), parent, parent.getOwner(), parent.getType() );
-                        newFolder.updateIndex();
                         makePersistent(newFolder);
+                        newFolder.updateIndex();
                         ret.add(newFolder);
                         parent = newFolder;
                     }
@@ -364,17 +365,16 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
 	
 	@Override
 	@SuppressWarnings("unchecked")
-	public List<Folder> findIndexTargets(Integer maxResults){
-		Query q = getSession().createNamedQuery("findFolderIndexTargets");
-//		q.setParameter("date", getAncientCalendar());
+	public List<IndexJob> findIndexTargets(Integer maxResults){
+		Query q = getSession().createNamedQuery("findIndexTargets");
 		q.setMaxResults(maxResults);
+        q.setParameter("indexableClass", Folder.class);
 		return q.getResultList();
 	}
 	
 	@Override
-	public Integer prepareReIndex() {
-		Query q = getSession().createNamedQuery("prepareFolderReIndex");
-		return q.executeUpdate();
+	public void prepareReIndex() {
+		resetIndexOnFolderContent(findRootFolder());
 	}
 
 	

@@ -25,6 +25,7 @@ import server.i18n.LocalMessage;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
+import server.index.IndexJob;
 
 @NamedQueries(
 		{
@@ -94,16 +95,8 @@ import java.util.*;
 					query = "select f from Folder f where f.parent=:parent and f.parent.id != f.id order by name"
 			),
 			@NamedQuery(
-					name = "prepareFolderReIndex",
-					query = "UPDATE Folder f SET f.indexOk=NULL"
-			),
-			@NamedQuery(
 					name = "findRootFolder",
 					query = "select f from Folder f where f.name=:name and f.parent.id=f.id"
-			),
-			@NamedQuery(
-					name = "findFolderIndexTargets",
-					query = "select f from Folder f WHERE f.indexOk=NULL"
 			),
             @NamedQuery(
 					name = "selectFolderByParentAndName",
@@ -213,12 +206,8 @@ import java.util.*;
 					query = "select o from ObjectSystemData o"
 			),
 			@NamedQuery(
-					name = "prepareOSD_ReIndex",
-					query = "UPDATE ObjectSystemData o SET o.indexOk=NULL"
-			),
-			@NamedQuery(
-					name = "findObjectIndexTargets",
-					query = "select o from ObjectSystemData o WHERE o.indexOk = NULL"
+					name = "findIndexTargets",
+					query = "select i from server.index.IndexJob i WHERE i.indexableClass=:indexableClass and i.failed=false"
 			),
             @NamedQuery(
 					name = "findLatestHead",

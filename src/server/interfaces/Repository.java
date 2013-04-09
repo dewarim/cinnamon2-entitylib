@@ -22,7 +22,12 @@ public interface Repository {
 	
 	String getName();
 	void setName(String name);
-	
+
+    /**
+     * Return the HibernateSession that was created during the instantiation of this
+     * repository object. You should not re-use this in another thread.
+     * @return the repository's HibernateSession object
+     */
 	HibernateSession getHibernateSession();
 	void setHibernateSession(HibernateSession session);
 
@@ -50,5 +55,10 @@ public interface Repository {
 	
 	void startIndexServer();
 	void startWorkflowServer();
-	
+
+    /**
+     * Create a new HibernateSession configured for this repository.
+     * @return a new HibernateSession
+     */
+    HibernateSession createHibernateSession();
 }

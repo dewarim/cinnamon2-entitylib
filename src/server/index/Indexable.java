@@ -1,7 +1,5 @@
 package server.index;
 
-import java.util.Date;
-
 public interface Indexable {
 
 	/**
@@ -42,26 +40,26 @@ public interface Indexable {
 	 */
 	String getSystemMetadata();
 	
-	/**
-	 * <p>If indexing was successful, set indexOk to true, otherwise to false.</p>
-	 * <p>If this field is null, the item in question has not been indexed yet.<p>
-	 * @return true if indexing was successful, false if unsuccessful, null if the object needs to be indexed.
-	 */
-	Boolean getIndexOk();
+//	/**
+//	 * <p>If indexing was successful, set indexOk to true, otherwise to false.</p>
+//	 * <p>If this field is null, the item in question has not been indexed yet.<p>
+//	 * @return true if indexing was successful, false if unsuccessful, null if the object needs to be indexed.
+//	 */
+//	Boolean getIndexOk();
 
-    /**
-     * Set the indexOk-flag.
-     * @param indexOk set to true if index operation was successful, false if unsuccessful, null if the IndexServer
-     * should index this item again. Note: the IndexServer has to be configured to run asynchronously for the null
-     * parameter to work.
-     */
-	void setIndexOk(Boolean indexOk);
+//    /**
+//     * Set the indexOk-flag.
+//     * @param indexOk set to true if index operation was successful, false if unsuccessful, null if the IndexServer
+//     * should index this item again. Note: the IndexServer has to be configured to run asynchronously for the null
+//     * parameter to work.
+//     */
+//	void setIndexOk(Boolean indexOk);
 
-    /**
-     * Set the date on which the object was last indexed.
-     * @param date Java date object which defines moment of the last update event.
-     */
-	void setIndexed(Date date);
+//    /**
+//     * Set the date on which the object was last indexed.
+//     * @param date Java date object which defines moment of the last update event.
+//     */
+//	void setIndexed(Date date);
 
     Boolean hasXmlContent();
 
@@ -69,5 +67,12 @@ public interface Indexable {
      * Schedule the object to be updated by the background index thread at the next opportunity.
      */
     void updateIndex();
-    
+
+    /**
+     * @return The id of the indexed object. 
+     */
+    // Note: did not use getId as the id may be added dynamically via GORM (in Cinnamon 3) and
+    // it may confuse the IDE to have a class which does not (at compile time) have an id field
+    // but only a getter for it.
+    Long myId();
 }

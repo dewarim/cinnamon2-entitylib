@@ -6,24 +6,22 @@ import server.Folder;
 import server.dao.*;
 import server.dao.DAOFactory;
 import server.dao.FolderDAO;
-import server.dao.LanguageDAO;
 import server.dao.MessageDAO;
 import server.dao.ObjectSystemDataDAO;
 import server.dao.UiLanguageDAO;
 import server.data.ObjectSystemData;
 import server.global.ConfThreadLocal;
-import server.i18n.Language;
 import server.i18n.LocalMessage;
 import server.i18n.UiLanguage;
-import server.index.LuceneBridge;
 import server.interfaces.Repository;
 import utils.HibernateSession;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
-import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * The IndexServer is intended to run as a thread which will wake up every couple of seconds to
@@ -37,6 +35,7 @@ public class IndexServer implements Runnable {
     private Logger log = LoggerFactory.getLogger(this.getClass());
 
     EntityManager em;
+    HibernateSession hibernateSession;
     static DAOFactory daoFactory = DAOFactory.instance(DAOFactory.HIBERNATE);
     final LuceneBridge lucene;
     Long sleep = 5000L;
@@ -45,7 +44,7 @@ public class IndexServer implements Runnable {
     Integer logModulus = 1;
     Repository repository;
 
-    public IndexServer(LuceneBridge lucene, EntityManager em, Repository repository) {
+    public IndexServer(LuceneBridge lucene, Repository repository) {
         /*
            * Default values if luceneProperties are missing or incomplete:
            */
@@ -71,16 +70,13 @@ public class IndexServer implements Runnable {
         }
 
         this.lucene = lucene;
-        this.em = em;
         this.repository = repository;
     }
 
-    public IndexServer(LuceneBridge lucene, Long sleepMilliseconds, Integer itemsPerRun,
-                       EntityManager em, Repository repository) {
+    public IndexServer(LuceneBridge lucene, Long sleepMilliseconds, Integer itemsPerRun, Repository repository) {
         this.lucene = lucene;
         this.sleep = sleepMilliseconds;
         this.itemsPerRun = itemsPerRun;
-        this.em = em;
         this.repository = repository;
     }
 
@@ -92,6 +88,8 @@ public class IndexServer implements Runnable {
      */
     public void run() {
         // initialize LocalMessage:
+        hibernateSession = repository.createHibernateSession();
+        em = hibernateSession.getEntityManager();
         try {
             log.debug("Initialize LocalMessage");
             MessageDAO messageDao = daoFactory.getMessageDAO(em);
@@ -115,7 +113,7 @@ public class IndexServer implements Runnable {
             // necessary in case an exception corrupts or closes the EntityManager.
             if (em == null || !em.isOpen()) {
                 // create a new EM with this repository's connection details:
-                em = repository.getEntityManager();
+                em = hibernateSession.getEntityManager();
                 HibernateSession.setLocalEntityManager(em);
             }
 
@@ -132,13 +130,8 @@ public class IndexServer implements Runnable {
                 et = em.getTransaction();
                 et.begin();
                 indexOSDs(itemsPerRun);
-                et.commit();
-                et = em.getTransaction();
-                et.begin();
                 indexFolders(itemsPerRun);
-                localDebug("before commit of folders");
                 et.commit();
-                localDebug("after commit of folders");
             } catch (Throwable e) {
                 log.debug("Exception during indexing: ", e);
                 try {
@@ -158,46 +151,68 @@ public class IndexServer implements Runnable {
     }
 
     void indexOSDs(Integer items) {
-        ObjectSystemDataDAO osdDao = daoFactory.getObjectSystemDataDAO(em);
-        localDebug("before findIndexTargets");
-        List<ObjectSystemData> osds = osdDao.findIndexTargets(items);
-        localDebug("# of osds to reindex: " + osds.size());
-        for (ObjectSystemData osd : osds) {
-            localDebug("indexer working on OSD: " + osd.getId());
-            try {
-                lucene.updateObjectInIndex(osd);
-            } catch (Exception e) {
-                log.debug("indexing of object " + osd.getId() + "failed with:", e);
-                osd.setIndexOk(false);
+        ObjectSystemDataDAO oDao = daoFactory.getObjectSystemDataDAO(em);
+        IndexJobDAO jobDao = daoFactory.getIndexJobDAO(em);
+        List<IndexJob> jobs = oDao.findIndexTargets(items);
+        localDebug("# of osds to reindex: " + jobs.size());
+        Set<Long> seen = new HashSet<>(jobs.size());        
+        for (IndexJob job : jobs) {
+            Long id = job.indexableId;
+            if(seen.contains(id)){
+                jobDao.delete(job);
                 continue;
             }
-            osd.setIndexOk(true);
-            osd.setIndexed(new Date());
+            ObjectSystemData osd = oDao.get(id);
+            if(osd == null){
+                localDebug("did not find osd #"+id);
+                jobDao.delete(job);
+                seen.add(id);
+                continue;
+            }
+            try {
+                localDebug("indexer working on OSD: " + osd.getId());
+                lucene.updateObjectInIndex(osd);
+                jobDao.delete(job);
+            } catch (Exception e) {
+                log.debug("indexing of object " + osd.getId() + "failed with:", e);
+                job.failed = true;
+            }
+            seen.add(id);
         }
         /* This is the most expensive way to do it.
            * On the other hand, it can handle broken objects and defective index_items
            * without preventing one bad apple from spoiling the entire index.
            */
     }
-
+    
     void indexFolders(Integer items) {
-        FolderDAO folderDao = daoFactory.getFolderDAO(em);
-        localDebug("before findIndexTargets");
-        List<Folder> folders = folderDao.findIndexTargets(items);
-        localDebug("# of folders to reindex: " + folders.size());
-        for (Folder folder : folders) {
-            localDebug("indexer working on folder: " + folder.getId());
-            try {
-//                synchronized (lucene){
-                lucene.updateObjectInIndex(folder);
-//                }
-            } catch (Exception e) {
-                log.debug("indexing of object " + folder.getId() + "failed with:", e);
-                folder.setIndexOk(false);
+        FolderDAO fDao = daoFactory.getFolderDAO(em);
+        IndexJobDAO jDao = daoFactory.getIndexJobDAO(em);
+        List<IndexJob> jobs = fDao.findIndexTargets(items);
+        localDebug("# of folders to reindex: " + jobs.size());
+        Set<Long> seen = new HashSet<>(jobs.size());
+        for (IndexJob job : jobs) {
+            Long id = job.indexableId;
+            if(seen.contains(id)){
+                jDao.delete(job);
                 continue;
             }
-            folder.setIndexOk(true);
-            folder.setIndexed(new Date());
+            Folder folder = fDao.get(id);
+            if(folder == null){
+                localDebug("Did not find folder #"+job.getIndexableId());
+                jDao.delete(job);
+                seen.add(id);
+                continue;
+            }
+            try {
+                localDebug("indexer working on folder: " + folder.getId());
+                lucene.updateObjectInIndex(folder);
+                jDao.delete(job);
+            } catch (Exception e) {
+                log.debug("indexing of object " + folder.getId() + "failed with:", e);
+                job.failed = true;
+            }
+            seen.add(id);
         }
     }
 

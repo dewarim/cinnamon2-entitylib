@@ -206,8 +206,6 @@ public class LuceneBridge {
                 log.debug("before addDocument");
                 indexWriter.addDocument(doc);
                 log.debug("added Document");
-                indexable.setIndexed(new Date());
-                indexable.setIndexOk(true);
                 indexWriter.commit();
             } catch (OutOfMemoryError e) {
                 log.warn("OOM-error during indexing:", e);

@@ -104,6 +104,7 @@ public abstract class DAOFactory {
 	public abstract IndexTypeDAO getIndexTypeDAO(EntityManager session);
 	public abstract IndexItemDAO getIndexItemDAO(EntityManager session);
 	public abstract IndexGroupDAO getIndexGroupDAO(EntityManager session);
+	public abstract IndexJobDAO getIndexJobDAO(EntityManager session);
 	public abstract MessageDAO getMessageDAO(EntityManager session);
     public abstract MetasetDAO getMetasetDAO(EntityManager session);
     public abstract MetasetTypeDAO getMetasetTypeDAO(EntityManager session);

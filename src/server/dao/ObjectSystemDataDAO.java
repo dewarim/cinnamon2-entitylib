@@ -23,6 +23,7 @@ import server.User;
 import server.dao.GenericDAO;
 import server.data.ObjectSystemData;
 import server.exceptions.CinnamonException;
+import server.index.IndexJob;
 import server.interfaces.Repository;
 
 import java.util.List;
@@ -52,20 +53,11 @@ public interface ObjectSystemDataDAO extends GenericDAO<ObjectSystemData, Long> 
     List<ObjectSystemData> findAllByParent(Folder parent);
 
 	/**
-	 * Find all OSDs whose indexed-time is "0000-00-00 00:00:00". Those are the ones
-	 * whose index is not current.
+	 * Find all OSDs that need indexing (that is, those which have an IndexJob entry)
 	 * @param maxResults maximum number of results
 	 * @return a List of all IndexTargets (limited by maxResults).
 	 */
-	List<ObjectSystemData> findIndexTargets(Integer maxResults);
-	
-	/**
-	 * Set the indexed-column to 0 and trigger a re-indexing by the IndexServer.
-     * @return the number of affected rows.
-	 */
-	Integer prepareReIndex();
-	
-//	ObjectSystemData findByName(String name);
+	List<IndexJob> findIndexTargets(Integer maxResults);
 
 	List<ObjectSystemData> findAllByNameAndType(String name, ObjectType type);
 	

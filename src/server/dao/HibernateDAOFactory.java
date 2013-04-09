@@ -211,6 +211,11 @@ public class HibernateDAOFactory extends DAOFactory {
 	public IndexGroupDAO getIndexGroupDAO(EntityManager session) {
 		return (IndexGroupDAO) instantiateDAO(IndexGroupDAOHibernate.class, session);
 	}
+    
+    @Override
+	public IndexJobDAO getIndexJobDAO(EntityManager session) {
+		return (IndexJobDAO) instantiateDAO(IndexJobDAOHibernate.class, session);
+	}
 	
 	@Override
 	public FolderTypeDAO getFolderTypeDAO(EntityManager session) {

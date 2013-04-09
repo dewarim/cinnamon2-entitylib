@@ -123,7 +123,9 @@ public class LinkService {
             case OBJECT:
                 query = em.createQuery("from Link l where l.parent=:parent and osd is not NULL");
                 query.setParameter("parent", parent);
-                links = updateObjectLinks(query.getResultList());
+                List linkList = query.getResultList();
+                log.debug("findLinksIn found "+linkList+" links.");
+                links = updateObjectLinks(linkList);
                 break;
             case FOLDER:
                 query = em.createQuery("from Link l where l.parent=:parent and folder is not NULL");

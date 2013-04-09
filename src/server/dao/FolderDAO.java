@@ -21,6 +21,7 @@ import server.Folder;
 import server.data.ObjectSystemData;
 import server.data.Validator;
 import server.exceptions.CinnamonException;
+import server.index.IndexJob;
 
 import java.util.List;
 import java.util.Map;
@@ -129,13 +130,13 @@ public interface FolderDAO extends GenericDAO<Folder, Long> {
 	 * @param maxResults maximum number of results
 	 * @return List of Folders to index (limited by maxResults).
 	 */
-	List<Folder> findIndexTargets(Integer maxResults);
+	List<IndexJob> findIndexTargets(Integer maxResults);
 	
 	/**
-	 * Set the indexed-column to 0 and trigger a re-indexing by the IndexServer.
-     * @return the number of affected rows.
+	 * Recursively schedule all objects and folders to be re-indexed by the IndexServer.
+     * Note: this operation is currently not optimized for performance.
 	 */
-	Integer prepareReIndex();
+	void prepareReIndex();
 	
 	Folder get(String id);
 	

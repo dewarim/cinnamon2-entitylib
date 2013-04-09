@@ -40,6 +40,7 @@ import server.global.ConfThreadLocal;
 import server.global.Constants;
 import server.helpers.MetasetService;
 import server.helpers.ObjectTreeCopier;
+import server.index.IndexJob;
 import server.index.Indexable;
 import server.interfaces.IMetasetJoin;
 import server.interfaces.IMetasetOwner;
@@ -91,10 +92,6 @@ public class Folder
 			nullable = true)
 	private Folder parent;
 
-	@Column(name = "index_ok",
-			nullable = true)
-	private Boolean indexOk = true; // a new folder should always be valid and indexed.
-
 	@OneToMany(mappedBy = "parent")
 	@OrderBy("name")
 	private Set<Folder> children = new LinkedHashSet<Folder>();
@@ -109,20 +106,11 @@ public class Folder
 			nullable = false)
 	private Acl acl;
 
-	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "indexed",
-			nullable = true)
-	private Date indexed = new Date();
-
     @OneToMany(
             mappedBy = "folder",
             cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
     )
     private Set<FolderMetaset> folderMetasets = new HashSet<FolderMetaset>();
-
-	/*
-	 * Make sure you _do_ index the object!
-	 */
 
 	@Version
 	@Column(name="obj_version")
@@ -139,8 +127,6 @@ public class Folder
         parent = that.parent;
         type = that.type;
         acl = that.acl;
-        indexed = null;
-        indexOk = null;
         metadata = that.metadata;
     }
 
@@ -556,20 +542,6 @@ public class Folder
 	}
 
 	/**
-	 * @return the indexed
-	 */
-	public Date getIndexed() {
-		return indexed;
-	}
-
-	/**
-	 * @param indexed the indexed to set
-	 */
-	public void setIndexed(Date indexed) {
-		this.indexed = indexed;
-	}
-
-	/**
 	 *
 	 * @param recursive set to true if subfolders must be included in the list of OSDs.
 	 * @return a List of OSDs in this folder
@@ -594,21 +566,6 @@ public class Folder
 	public void setType(FolderType type) {
 		this.type = type;
 	}
-
-	/**
-	 * @return the indexOk
-	 */
-	public Boolean getIndexOk() {
-		return indexOk;
-	}
-
-	/**
-	 * @param indexOk the indexOk to set
-	 */
-	public void setIndexOk(Boolean indexOk) {
-		this.indexOk = indexOk;
-	}
-
 
 	@Override
 	/*
@@ -991,6 +948,14 @@ public class Folder
     }
 
     public void updateIndex(){
-        indexOk = null;
+        EntityManager em = HibernateSession.getLocalEntityManager();
+        IndexJobDAO jobDAO = daoFactory.getIndexJobDAO(em);
+        IndexJob indexJob = new IndexJob(this);
+        jobDAO.makePersistent(indexJob);
+    }
+    
+    @Override
+    public Long myId(){
+        return id;
     }
 }
