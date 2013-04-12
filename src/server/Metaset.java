@@ -80,7 +80,12 @@ public class Metaset implements Serializable {
 
     public Metaset(String content, MetasetType type) {
         this.type = type;
-        this.content = content;
+        if(content == null){
+            setContent("<metaset/>");
+        }
+        else{
+            this.content = content;
+        }
     }
 
     public Metaset(Map<String, String> cmd) {
