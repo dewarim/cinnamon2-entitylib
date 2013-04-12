@@ -1,6 +1,7 @@
 package server.lifecycle.state;
 
 import org.dom4j.Document;
+import org.dom4j.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.Acl;
@@ -35,13 +36,19 @@ public class ChangeAclState extends BaseLifeCycleState implements IState {
     }
 
     @Override
-    public void enter(ObjectSystemData osd, String params) {
+    public void enter(ObjectSystemData osd, String config) {
         log.debug("osd "+osd.getId()+" entered ChangeAclState.");
-        Document doc = ParamParser.parseXmlToDocument(params);
-        String aclName = doc.selectSingleNode("//aclName").getText();
+        Document doc = ParamParser.parseXmlToDocument(config);
+        Node aclNode = doc.selectSingleNode("//aclName");
+        if(aclNode == null){
+            log.error("Could not find aclName element in params - cannot change ACL. config:\n"+config);
+            throw new RuntimeException("fail.change.acl");
+        }
+        String aclName = aclNode.getText();
         AclDAO aclDao = daoFactory.getAclDAO(HibernateSession.getLocalEntityManager());
         Acl acl = aclDao.findByName(aclName);
         if(acl == null){
+            log.error("Cannot find acl by name "+aclName+" to set on OSD. Config:\n"+config);
             throw new CinnamonException("error.acl.not_found", aclName);
         }
         log.debug("Setting acl from "+osd.getAcl().getName() + " to "+ aclName);
