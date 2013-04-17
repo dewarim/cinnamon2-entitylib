@@ -146,6 +146,9 @@ public class IndexServer implements Runnable {
                     log.error("Failed to rollback; " + re.getMessage());
                 }
             }
+            finally {
+                em.clear();
+            }
             localDebug("re-index run for " + lucene.getRepository() + " finished.");
         }
     }
