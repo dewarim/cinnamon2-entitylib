@@ -4,8 +4,6 @@ import org.dom4j.Document;
 import org.dom4j.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import server.ConfigEntry;
-import server.dao.ConfigEntryDAO;
 import server.dao.DAOFactory;
 import server.dao.HibernateDAOFactory;
 import server.dao.ObjectSystemDataDAO;
@@ -13,6 +11,7 @@ import server.data.ObjectSystemData;
 import server.data.SqlCustomConn;
 import server.exceptions.CinnamonException;
 import server.helpers.PoBox;
+import server.interfaces.Repository;
 import server.lifecycle.LifeCycleState;
 import server.trigger.ITrigger;
 import utils.HibernateSession;
@@ -109,7 +108,8 @@ public class LifecycleStateAuditTrigger implements ITrigger {
             osd = oDao.get((String) params.get(commandIdMap.get(command)));
         }
         
-        SqlCustomConn auditConnection = poBox.repository.getSqlCustomConns().get("audit.connection");
+        Repository repository = poBox.repository;
+        SqlCustomConn auditConnection = repository.getSqlCustomConns().get("audit.connection");
         if(auditConnection == null){
             log.debug("audit db connection does not exist - skip audit logging.");
             return poBox;
@@ -145,16 +145,16 @@ public class LifecycleStateAuditTrigger implements ITrigger {
                 log.debug("filter log message.");
                 return poBox;
             }
-            
+
             Connection connection = auditConnection.getConnection();
-            PreparedStatement stmt = 
+            PreparedStatement stmt =
                     connection.prepareStatement("insert into lifecycle_log (repository, hibernate_id, user_name, user_id, date_created, lifecycle_id, lifecycle_name, old_state_id, old_state_name, new_state_id, new_state_name, folder_path, name) values(?,?,?,?,?,?,?,?,?,?,?,?,?)");
             stmt.setString(1, poBox.repository.getName());
             stmt.setLong(2, osd.getId());
             stmt.setString(3, poBox.user.getName());
             stmt.setLong(4, poBox.user.getId());
             stmt.setTimestamp(5, new Timestamp(new java.util.Date().getTime()));
-            stmt.setLong(6,lifecycleId);
+            stmt.setLong(6, lifecycleId);
             stmt.setString(7, lifecycleName);
             stmt.setLong(8, oldId);
             stmt.setString(9, oldName);
@@ -163,8 +163,8 @@ public class LifecycleStateAuditTrigger implements ITrigger {
             stmt.setString(12, osd.getParent().fetchPath());
             stmt.setString(13, osd.getName());
             int rows = stmt.executeUpdate();
-            log.debug("executeUpdate changed: "+rows+" rows");
-            stmt.close();
+            log.debug("executeUpdate changed: " + rows + " rows");
+            stmt.close();                    
         }
         catch (Exception ex){
             log.debug("failed log lifecycle state change event", ex);
