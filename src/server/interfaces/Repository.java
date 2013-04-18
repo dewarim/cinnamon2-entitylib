@@ -7,6 +7,7 @@ import server.interfaces.CommandRegistry;
 import utils.HibernateSession;
 
 import javax.persistence.EntityManager;
+import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
 
@@ -61,4 +62,9 @@ public interface Repository {
      * @return a new HibernateSession
      */
     HibernateSession createHibernateSession();
+
+    /**
+     * @return SQL connection to the audit log database.
+     */
+    Connection getAuditConnection();
 }

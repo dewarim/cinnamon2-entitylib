@@ -4,11 +4,15 @@ import org.dom4j.Element;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import server.User;
+import server.audit.AuditService;
+import server.audit.LogEvent;
 import server.dao.DAOFactory;
 import server.data.ObjectSystemData;
 import server.exceptions.CinnamonException;
 import server.global.Constants;
 import server.i18n.LocalMessage;
+import server.interfaces.Repository;
 import utils.ParamParser;
 
 import javax.persistence.*;
@@ -152,7 +156,7 @@ public class LifeCycleState implements Serializable {
      * @param osd       the osd to change.
      * @param nextState the new lifecycle state
      */
-    public void enterState(ObjectSystemData osd, LifeCycleState nextState) {
+    public void enterState(ObjectSystemData osd, LifeCycleState nextState, Repository repository, User user) {
         IState newState;
         try {
             newState = nextState.getStateClass().newInstance();
@@ -166,10 +170,13 @@ public class LifeCycleState implements Serializable {
 
         log.debug("entering state of lifecycle-Class " + nextState.getName());
 
+        LifeCycleState oldState = osd.getState();
         if (newState.checkEnteringObject(osd, config)) {
             newState.enter(osd, config);
             osd.setState(nextState);
             osd.updateIndex();
+            AuditService auditService = new AuditService(repository.getAuditConnection());           
+            auditService.insertLogEvent(auditService.createLogEvent(osd, user, oldState, nextState));
         }
         else {
             throw new CinnamonException("error.enter.lifecycle");
@@ -185,8 +192,10 @@ public class LifeCycleState implements Serializable {
      * @param nextState the next lifecycle state. May be null if the OSD is being
      *                  detached from a lifecycle.
      */
-    public void exitState(ObjectSystemData osd, LifeCycleState nextState) {
+    public void exitState(ObjectSystemData osd, LifeCycleState nextState, Repository repository, User user) {
         if (nextState == null) {
+            AuditService auditService = new AuditService(repository.getAuditConnection());
+            auditService.insertLogEvent(auditService.createLogEvent(osd, user, osd.getState(), null));
             return;
         }
 
