@@ -27,6 +27,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +41,10 @@ import server.global.ConfThreadLocal;
 import server.global.Constants;
 import server.helpers.MetasetService;
 import server.helpers.ObjectTreeCopier;
+import server.index.IndexAction;
 import server.index.IndexJob;
 import server.index.Indexable;
+import server.index.LuceneBridge;
 import server.interfaces.IMetasetJoin;
 import server.interfaces.IMetasetOwner;
 import server.interfaces.XmlConvertable;
@@ -454,7 +457,7 @@ public class Folder
 		folder.add(User.asElement("owner", getOwner()));
 		folder.addElement("aclId").addText(String.valueOf(getAcl().getId()));
 		folder.addElement("typeId").addText(String.valueOf(type.getId()));
-		if(folder.getParent() != null){
+		if(getParent() != null){
 			folder.addElement("parentId").addText(String.valueOf(getParent().getId()));
 		}
 		else{
@@ -505,10 +508,10 @@ public class Folder
 	public String getSystemMetadata() {
 		Document doc = DocumentHelper.createDocument();
 		Element root = doc.addElement("sysMeta");
-		String className = getClass().getName();
+		String className = Hibernate.getClass(this).getName();
 		root.addAttribute("javaClass", className);
 		root.addAttribute("hibernateId", String.valueOf(getId()));
-		root.addAttribute("id", className + "@" + getId());
+		root.addAttribute("id", uniqueId());
 		toXmlElement(root);
 		return doc.asXML();
 	}
@@ -954,8 +957,36 @@ public class Folder
         jobDAO.makePersistent(indexJob);
     }
     
+    @PostUpdate
+    public void updateIndexOnCommit(){
+        LocalRepository.addIndexable(this, IndexAction.UPDATE);
+    } 
+    
+    @PostPersist
+    public void addToIndexOnCommit(){
+        LocalRepository.addIndexable(this, IndexAction.ADD);
+    }
+
+    @PostRemove
+    public void removeFromIndex(){
+        LocalRepository.addIndexable(this, IndexAction.REMOVE);
+    }
+  
     @Override
     public Long myId(){
         return id;
+    }
+    
+    @Override
+    public Indexable reload(){
+        EntityManager em = HibernateSession.getLocalEntityManager();
+        FolderDAO fDao = daoFactory.getFolderDAO(em);
+        return fDao.get(this.getId());
+    }
+
+    @Override
+    public String uniqueId() {
+        String className = Hibernate.getClass(this).getName();
+        return className + "@" + getId();
     }
 }

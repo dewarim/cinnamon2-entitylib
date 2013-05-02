@@ -86,7 +86,6 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
                         }
                         Folder newFolder = new Folder(seg, null, parent.getAcl(), parent, parent.getOwner(), parent.getType() );
                         makePersistent(newFolder);
-                        newFolder.updateIndex();
                         ret.add(newFolder);
                         parent = newFolder;
                     }
@@ -318,15 +317,6 @@ public class FolderDAOHibernate extends GenericHibernateDAO<Folder, Long>
 		return q.getResultList();
 	}
 
-	public Folder makePersistent(Folder f){
-		f = super.makePersistent(f);
-		getSession().flush();
-		if(f.getId() == 0){
-		    throw new CinnamonException("error.folder.persist");
-		}
-		return f;
-	}
-	
 	/**
 	 * Convenience method: given a String which represents a folder-Id, this
 	 * method returns the Folder.

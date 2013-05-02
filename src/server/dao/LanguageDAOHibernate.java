@@ -80,15 +80,6 @@ public class LanguageDAOHibernate extends GenericHibernateDAO<Language, Long>
 		return q.getResultList();
 	}
 
-	public Language makePersistent(Language lang){
-		lang = super.makePersistent(lang);
-		getSession().flush();
-		if(lang.getId() == 0){
-		    throw new CinnamonConfigurationException("Failure persisting Language.");
-		}
-		return lang;
-	}
-	
 	@Override
 	public Language get(String id){
 		Long langId = ParamParser.parseLong(id, "error.get.language");

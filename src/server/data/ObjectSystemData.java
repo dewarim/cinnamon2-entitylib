@@ -21,7 +21,9 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
+import org.hibernate.event.PostInsertEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import server.*;
@@ -31,6 +33,8 @@ import server.exceptions.CinnamonException;
 import server.global.Conf;
 import server.global.ConfThreadLocal;
 import server.global.Constants;
+import server.index.IndexAction;
+import server.index.LuceneBridge;
 import server.global.PermissionName;
 import server.helpers.MetasetService;
 import server.helpers.ObjectTreeCopier;
@@ -41,9 +45,6 @@ import server.interfaces.IMetasetJoin;
 import server.interfaces.IMetasetOwner;
 import server.interfaces.XmlConvertable;
 import server.lifecycle.LifeCycleState;
-import server.references.Link;
-import server.references.LinkService;
-import utils.FileKeeper;
 import utils.HibernateSession;
 import utils.ParamParser;
 
@@ -651,7 +652,7 @@ public class ObjectSystemData
         // the correct way would be to use a DAO, but then we are on the way to use Grails
         // GORM anyway, so this is a temporary solution:
         log.debug("persist metaset");
-        em.persist(om);
+        em.persist(om);       
     }
 
     public void setName(String name) {
@@ -1053,10 +1054,10 @@ public class ObjectSystemData
         log.debug("getsystemMeta");
         Document doc = DocumentHelper.createDocument();
         Element root = doc.addElement("sysMeta");
-        String className = getClass().getName();
+        String className = Hibernate.getClass(this).getName();
         root.addAttribute("javaClass", className);
         root.addAttribute("hibernateId", String.valueOf(getId()));
-        root.addAttribute("id", className + "@" + getId()); // for a given repository, it's unique.
+        root.addAttribute("id", uniqueId()); // for a given repository, it's unique.
         log.debug("convertToElement");
         root.add(convertToElement());
         return doc.asXML();
@@ -1459,7 +1460,6 @@ public class ObjectSystemData
                 target.setLatestHead(true);
                 if (predecessor != null && predecessor.getLatestHead()) {
                     predecessor.setLatestHead(false);
-                    predecessor.updateIndex();
                 }
             }
         }
@@ -1467,19 +1467,48 @@ public class ObjectSystemData
         // the predecessor cannot be latest branch, that has to be this (or a descendant) node.
         if (predecessor != null && predecessor.getLatestBranch()) {
             predecessor.setLatestBranch(false);
-            predecessor.updateIndex();
         }
     }
-
-    public void updateIndex(){
+    
+    public void updateIndex(){        
         EntityManager em = HibernateSession.getLocalEntityManager();
         IndexJobDAO jobDAO = daoFactory.getIndexJobDAO(em);
         IndexJob indexJob = new IndexJob(this);
         jobDAO.makePersistent(indexJob);
     }
+
+    @PostUpdate
+    public void updateIndexOnCommit(){
+        LocalRepository.addIndexable(this, IndexAction.UPDATE);
+    }
+    
+    @PostPersist
+    public void addToIndexOnCommit(){
+        LocalRepository.addIndexable(this, IndexAction.ADD);
+    }
+    
+    @PostRemove
+    public void removeFromIndex(){
+        LocalRepository.addIndexable(this, IndexAction.REMOVE);
+    }
     
     @Override
     public Long myId(){
         return id;
+    }
+
+    @Override
+    public Indexable reload(){
+        EntityManager em = HibernateSession.getLocalEntityManager();
+        ObjectSystemDataDAO oDao = daoFactory.getObjectSystemDataDAO(em);
+        ObjectSystemData osd = oDao.get(this.getId());
+        log.debug("osd for "+id+" returned: "+osd);
+        return osd;
+    }
+
+    @Override
+    public String uniqueId() {
+        String className = Hibernate.getClass(this).getName();
+        return className + "@" + getId();
     }
 }

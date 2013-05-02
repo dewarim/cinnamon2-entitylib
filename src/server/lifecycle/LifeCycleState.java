@@ -174,7 +174,6 @@ public class LifeCycleState implements Serializable {
         if (newState.checkEnteringObject(osd, config)) {
             newState.enter(osd, config);
             osd.setState(nextState);
-            osd.updateIndex();
             AuditService auditService = new AuditService(repository.getAuditConnection());           
             auditService.insertLogEvent(auditService.createLogEvent(osd, user, oldState, nextState));
         }

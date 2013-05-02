@@ -52,8 +52,6 @@ public class AclDAOHibernate extends GenericHibernateDAO<Acl, Long> implements
 					
 		// save object
 		log.debug("Trying to save ACL " + id);
-//		em.persist(acl);
-		makePersistent(acl);
 	}
 
 	@SuppressWarnings("unchecked")

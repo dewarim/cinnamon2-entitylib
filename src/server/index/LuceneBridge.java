@@ -55,7 +55,7 @@ public class LuceneBridge {
     static Properties luceneProperties = ConfThreadLocal.getConf().findProperties("lucene.properties");
     transient Logger log = LoggerFactory.getLogger(this.getClass());
     static DAOFactory daoFactory = DAOFactory.instance(DAOFactory.HIBERNATE);
-
+    
     File indexFolder;
     Directory indexDir;
     Analyzer analyzer;//new CinnamonStandardAnalyzer(Version.LUCENE_CURRENT);
@@ -158,11 +158,22 @@ public class LuceneBridge {
         }
     }
 
-    public void addObjectToIndex(Indexable indexable) {
+    public void addObjectToIndex(Indexable indexable){
+        addObjectToIndex(indexable, true);
+    }
+    
+    public void addObjectToIndex(Indexable indexableObj, Boolean removeFirst) {
         try {
             try {
+                Indexable indexable = indexableObj.reload();
+                if(indexable == null){
+                    log.debug("Indexable Object "+indexableObj.uniqueId()+" no longer exists in the database. nop.");
+                    return;
+                }
                 // always try to remove an object, as other code may have already called this method
-                removeObjectFromIndex(indexable);
+                if(removeFirst){
+                    removeObjectFromIndex(indexable);
+                }
                 Document doc = new Document();
                 log.debug("store standard fields");
                 storeStandardFields(indexable, doc);
@@ -342,13 +353,9 @@ public class LuceneBridge {
                 return;
             }
             log.debug("creating reader");
-            log.debug("parsing sysmeta");
-            org.dom4j.Document sysMeta = ParamParser.parseXmlToDocument(indexable.getSystemMetadata(),
-                    "error.invalid.system_metadata");
-            String id = sysMeta.valueOf("/sysMeta/@id");
+            String id = indexable.uniqueId();
             log.debug("removing document with id " + id);
             log.debug("delete document");
-
             acquireLock();
             deleteDocument(new Term("uniqueId", id), 5);
         } catch (FileNotFoundException f) {
@@ -451,10 +458,6 @@ public class LuceneBridge {
                 return;
                 // nothing to do - index is empty.
             }
-//            IndexReader reader = IndexReader.open(indexDir, false);
-//            reader.deleteDocuments(new Term("javaClass", clazz.getName()));
-//            reader.close();
-
             indexWriter.deleteDocuments(new Term("javaClass", clazz.getName()));
             indexWriter.commit();
         } catch (IOException e) {

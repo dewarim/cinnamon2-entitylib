@@ -227,10 +227,9 @@ public class ObjectTreeCopier {
             log.debug("set root to full Copy of osd.root: " + (osd.getRoot() == null ? null : osd.getRoot().getId()));
             copy.setRoot(checkCopyCache(osd.getRoot()));
         }
-
-        fixLatestHeadAndBranch(copy);
         
         ObjectSystemData persistentCopy = osdDao.makePersistent(copy);
+        fixLatestHeadAndBranch(persistentCopy);
         osd.copyContent(persistentCopy);
         copyResult.addObject(persistentCopy);
         copyCache.put(osd, persistentCopy);

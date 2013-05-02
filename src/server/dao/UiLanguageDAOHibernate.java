@@ -88,15 +88,6 @@ public class UiLanguageDAOHibernate extends GenericHibernateDAO<UiLanguage, Long
 		return q.getResultList();
 	}
 
-	public UiLanguage makePersistent(UiLanguage lang){
-		lang = super.makePersistent(lang);
-		getSession().flush();
-		if(lang.getId() == 0){
-		    throw new CinnamonConfigurationException("Failure persisting Language.");
-		}
-		return lang;
-	}
-	
 	@Override
 	public UiLanguage get(String id){
 		Long langId = ParamParser.parseLong(id, "error.get.ui_language");

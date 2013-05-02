@@ -75,4 +75,14 @@ public interface Indexable {
     // it may confuse the IDE to have a class which does not (at compile time) have an id field
     // but only a getter for it.
     Long myId();
+
+    /**
+     * Load this indexable again from the database.
+     */
+    Indexable reload();
+
+    /**
+     * @return a String composed of the Java class name and the Hibernate id, for example "server.Folder@123"
+     */
+    String uniqueId();
 }

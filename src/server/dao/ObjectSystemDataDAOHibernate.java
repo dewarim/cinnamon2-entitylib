@@ -164,7 +164,6 @@ public class ObjectSystemDataDAOHibernate extends
                 log.debug("setting latest head on predecessor");
     			predecessor.setLatestHead(true);
     		}
-            predecessor.updateIndex();
         }
 
     	ContentStore.deleteObjectFile(osd);
