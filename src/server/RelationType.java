@@ -65,7 +65,8 @@ public class RelationType
     @Column(name = "description",
             length = Constants.DESCRIPTION_SIZE,
             nullable = false)
-    private String description;
+    @Deprecated
+    private String description = "";
 
     /**
      * If leftobjectprotected is true:
