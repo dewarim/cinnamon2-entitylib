@@ -93,6 +93,15 @@ public class RelationType
             nullable = false
     )
     private Boolean cloneOnRightCopy = false;
+    
+    /**
+     * If the right object of a relation of this type is versioned,
+     * the relation will also be copied for the new version if this field is true.
+     */
+    @Column(name = "clone_on_right_version",
+            nullable = false
+    )
+    private Boolean cloneOnRightVersion = false;
 
     /**
      * If the left object of a relation of this type is copied,
@@ -101,7 +110,16 @@ public class RelationType
     @Column(name = "clone_on_left_copy",
             nullable = false
     )
-    private Boolean cloneOnLeftCopy = false;
+    private Boolean cloneOnLeftCopy = false; 
+    
+    /**
+     * If the left object of a relation of this type is versioned
+     * the relation will also be copied for the new version if this field is true.
+     */
+    @Column(name = "clone_on_left_version",
+            nullable = false
+    )
+    private Boolean cloneOnLeftVersion = false;
 
     @ManyToOne(cascade = {})
     @JoinColumn(name = "left_resolver_id",
@@ -154,6 +172,28 @@ public class RelationType
         this.rightResolver = rightResolver;
         this.cloneOnLeftCopy = cloneOnLeftCopy;
         this.cloneOnRightCopy = cloneOnRightCopy;
+    }   
+    
+    public RelationType(String name, String description,
+                        Boolean leftobjectprotected,
+                        Boolean rightobjectprotected,
+                        RelationResolver leftResolver,
+                        RelationResolver rightResolver,
+                        Boolean cloneOnRightCopy,
+                        Boolean cloneOnLeftCopy,
+                        Boolean cloneOnRightVersion,
+                        Boolean cloneOnLeftVersion
+    ) {
+        this.name = name;
+        this.description = description;
+        this.leftobjectprotected = leftobjectprotected;
+        this.rightobjectprotected = rightobjectprotected;
+        this.leftResolver = leftResolver;
+        this.rightResolver = rightResolver;
+        this.cloneOnLeftCopy = cloneOnLeftCopy;
+        this.cloneOnRightCopy = cloneOnRightCopy;
+        this.cloneOnLeftVersion = cloneOnLeftVersion;
+        this.cloneOnRightVersion = cloneOnRightVersion;
     }
 
     public RelationType(Map<String, String> cmd) {
@@ -163,6 +203,8 @@ public class RelationType
         rightobjectprotected = cmd.get("rightobjectprotected").equals("true");
         cloneOnLeftCopy = cmd.get("cloneOnLeftCopy").equals("true");
         cloneOnRightCopy = cmd.get("cloneOnRightCopy").equals("true");
+        cloneOnLeftVersion = cmd.get("cloneOnLeftVersion").equals("true");
+        cloneOnRightVersion = cmd.get("cloneOnRightVersion").equals("true");
 
         EntityManager em = HibernateSession.getLocalEntityManager();
         RelationResolverDAO rdd = daoFactory.getRelationResolverDAO(em);
@@ -254,6 +296,22 @@ public class RelationType
         this.rightResolver = rightResolver;
     }
 
+    public Boolean getCloneOnLeftVersion() {
+        return cloneOnLeftVersion;
+    }
+
+    public void setCloneOnLeftVersion(Boolean cloneOnLeftVersion) {
+        this.cloneOnLeftVersion = cloneOnLeftVersion;
+    }
+
+    public Boolean getCloneOnRightVersion() {
+        return cloneOnRightVersion;
+    }
+
+    public void setCloneOnRightVersion(Boolean cloneOnRightVersion) {
+        this.cloneOnRightVersion = cloneOnRightVersion;
+    }
+
     public void toXmlElement(Element root) {
         Element rt = root.addElement("relationType");
         rt.addElement("id").addText(String.valueOf(getId()));
@@ -263,7 +321,9 @@ public class RelationType
         rt.addElement("rightobjectprotected").addText(rightobjectprotected.toString());
         rt.addElement("leftobjectprotected").addText(leftobjectprotected.toString());
         rt.addElement("cloneOnLeftCopy").addText(cloneOnLeftCopy.toString());
+        rt.addElement("cloneOnLeftVersion").addText(cloneOnLeftVersion.toString());
         rt.addElement("cloneOnRightCopy").addText(cloneOnRightCopy.toString());
+        rt.addElement("cloneOnRightVersion").addText(cloneOnRightVersion.toString());
         rt.addElement("leftResolver").addText(leftResolver.getName());
         rt.addElement("rightResolver").addText(rightResolver.getName());
     }
@@ -295,27 +355,23 @@ public class RelationType
 
         RelationType that = (RelationType) o;
 
-        if (id != that.id) return false;
-        if (cloneOnLeftCopy != null ? !cloneOnLeftCopy.equals(that.cloneOnLeftCopy) : that.cloneOnLeftCopy != null)
-            return false;
-        if (cloneOnRightCopy != null ? !cloneOnRightCopy.equals(that.cloneOnRightCopy) : that.cloneOnRightCopy != null)
-            return false;
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (leftResolver != null ? !leftResolver.equals(that.leftResolver) : that.leftResolver != null) return false;
-        if (leftobjectprotected != null ? !leftobjectprotected.equals(that.leftobjectprotected) : that.leftobjectprotected != null)
-            return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (rightResolver != null ? !rightResolver.equals(that.rightResolver) : that.rightResolver != null)
-            return false;
-        if (rightobjectprotected != null ? !rightobjectprotected.equals(that.rightobjectprotected) : that.rightobjectprotected != null)
-            return false;
+        if (!cloneOnLeftCopy.equals(that.cloneOnLeftCopy)) return false;
+        if (!cloneOnLeftVersion.equals(that.cloneOnLeftVersion)) return false;
+        if (!cloneOnRightCopy.equals(that.cloneOnRightCopy)) return false;
+        if (!cloneOnRightVersion.equals(that.cloneOnRightVersion)) return false;
+        if (!description.equals(that.description)) return false;
+        if (!leftResolver.equals(that.leftResolver)) return false;
+        if (!leftobjectprotected.equals(that.leftobjectprotected)) return false;
+        if (!name.equals(that.name)) return false;
+        if (!rightResolver.equals(that.rightResolver)) return false;
+        if (!rightobjectprotected.equals(that.rightobjectprotected)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return name != null ? name.hashCode() : 0;
+        return name.hashCode();
     }
 
     /**
