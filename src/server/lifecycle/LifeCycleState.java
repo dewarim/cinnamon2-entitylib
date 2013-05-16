@@ -171,8 +171,8 @@ public class LifeCycleState implements Serializable {
         log.debug("entering state of lifecycle-Class " + nextState.getName());
 
         LifeCycleState oldState = osd.getState();
-        if (newState.checkEnteringObject(osd, config)) {
-            newState.enter(osd, config);
+        if (newState.checkEnteringObject(osd, nextState.getConfig())) {
+            newState.enter(osd, nextState.getConfig());
             osd.setState(nextState);
             AuditService auditService = new AuditService(repository.getAuditConnection());           
             auditService.insertLogEvent(auditService.createLogEvent(osd, user, oldState, nextState));
