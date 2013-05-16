@@ -289,7 +289,8 @@ public class ObjectSystemData
         log.debug("set root");
         if (predecessor == null) {
             setRoot(this);
-        } else {
+        }
+        else {
             setRoot(predecessor.getRoot());
         }
 
@@ -314,16 +315,20 @@ public class ObjectSystemData
 
             Long otId = ParamParser.parseLong((String) cmd.get("objtype_id"), "error.param.objtype_id");
             this.type = otDao.get(otId);
-        } else if (cmd.containsKey("objtype")) {
+        }
+        else if (cmd.containsKey("objtype")) {
             ObjectType objectType = otDao.findByName((String) cmd.get("objtype"));
             if (objectType == null) {
                 throw new CinnamonException("error.param.objtype");
-            } else {
+            }
+            else {
                 this.type = objectType;
             }
-        } else if (predecessor != null) {
+        }
+        else if (predecessor != null) {
             this.type = predecessor.getType();
-        } else {
+        }
+        else {
             this.type = otDao.findByName(Constants.OBJTYPE_DEFAULT);
         }
 
@@ -335,16 +340,19 @@ public class ObjectSystemData
                 parent = folderDAO.get(parent_id);
                 if (parent != null) {
                     setParent(parent);
-                } else {
+                }
+                else {
                     throw new CinnamonException("error.parent_folder.not_found");
                 }
 
-            } else { // parent_id == 0
+            }
+            else { // parent_id == 0
                 FolderDAO folderDao = daoFactory.getFolderDAO(em);
                 Folder rootFolder = folderDao.findRootFolder();
                 setParent(rootFolder);
             }
-        } else if (parent == null) {
+        }
+        else if (parent == null) {
             // note: parent may be set from predecessor.
             throw new CinnamonException("error.parent_folder.not_found");
         }
@@ -355,7 +363,8 @@ public class ObjectSystemData
             Long formatId = ParamParser.parseLong((String) cmd.get("format_id"), "error.param.format_id");
             Format format = formatDao.get(formatId);
             setFormat(format);
-        } else if (cmd.containsKey("format")) {
+        }
+        else if (cmd.containsKey("format")) {
             Format format = formatDao.findByName((String) cmd.get("format"));
             setFormat(format);
         }
@@ -367,7 +376,8 @@ public class ObjectSystemData
             Long aclId = ParamParser.parseLong((String) cmd.get("acl_id"), "error.param.acl_id");
             Acl acl = aclDao.get(aclId);
             setAcl(acl);
-        } else {
+        }
+        else {
             // if no sepcific acl is given, use the parent folder's acl
             log.debug("set acl to parent-folder's acl");
             setAcl(getParent().getAcl());
@@ -379,7 +389,7 @@ public class ObjectSystemData
         /*
            * Set language to language_id or to 'und' if language is null.
            */
-            log.debug("set language");
+        log.debug("set language");
         LanguageDAO langDao = daoFactory.getLanguageDAO(em);
         if (cmd.containsKey("language_id")) {
             Long langId = ParamParser.parseLong((String) cmd.get("language_id"),
@@ -389,7 +399,8 @@ public class ObjectSystemData
                 throw new CinnamonException("error.param.language_id");
             }
             setLanguage(lang);
-        } else if (getLanguage() == null) {
+        }
+        else if (getLanguage() == null) {
             Language lang = langDao.findByIsoCode("und");
             setLanguage(lang);
         }
@@ -463,7 +474,8 @@ public class ObjectSystemData
         this.contentPath = contentPath;
         if (contentPath != null) {
             this.contentSize = contentPath.length() > 0 ? (new File(getFullContentPath(repository))).length() : 0;
-        } else {
+        }
+        else {
             this.contentSize = null;
         }
     }
@@ -558,7 +570,7 @@ public class ObjectSystemData
      * Note: this parses the meta-xml into metasets and stores them as such.
      * This method will unlink existing metasets if they are missing from the metadata,
      * that is, you cannot submit partial metadata to setMetadata. You must set <em>all</em>
-     * metadata if you use this method. (see addMetaset to add an individual metaset) 
+     * metadata if you use this method. (see addMetaset to add an individual metaset)
      *
      * @param metadata    the custom metadata
      * @param writePolicy the write policy - what to do if other items already reference a metaset.
@@ -566,14 +578,15 @@ public class ObjectSystemData
     public void setMetadata(String metadata, WritePolicy writePolicy) {
         try {
             MetasetService metasetService = new MetasetService();
-            
+
             EntityManager em = HibernateSession.getLocalEntityManager();
             if (metadata == null || metadata.trim().length() == 0) {
                 this.metadata = "<meta/>";
                 for (OsdMetaset om : getOsdMetasets()) {
                     em.remove(om);
                 }
-            } else {
+            }
+            else {
                 Document doc = ParamParser.parseXmlToDocument(metadata, "error.param.metadata");
                 List<Node> sets = doc.selectNodes("//metaset");
 //            log.debug("found "+sets.size()+" metaset nodes in:\n"+metadata);
@@ -587,26 +600,26 @@ public class ObjectSystemData
                     }
                     return;
                 }
-                
+
                 Set<MetasetType> currentMetasetMap = new HashSet<MetasetType>();
-                for(Metaset metaset : fetchMetasets()){
+                for (Metaset metaset : fetchMetasets()) {
                     // create a set of the currently existing metasets.
                     currentMetasetMap.add(metaset.getType());
                 }
-                
+
                 for (Node metasetNode : sets) {
                     String content = metasetNode.detach().asXML();
                     String metasetTypeName = metasetNode.selectSingleNode("@type").getText();
                     log.debug("metasetType: " + metasetTypeName);
                     MetasetTypeDAO mtDao = daoFactory.getMetasetTypeDAO(em);
-                    MetasetType metasetType = mtDao.findByName(metasetTypeName);                    
+                    MetasetType metasetType = mtDao.findByName(metasetTypeName);
                     if (metasetType == null) {
                         throw new CinnamonException("error.unknown.metasetType", metasetTypeName);
                     }
                     metasetService.createOrUpdateMetaset(this, metasetType, content, writePolicy);
                     currentMetasetMap.remove(metasetType);
-                }                
-                for(MetasetType metasetType : currentMetasetMap){
+                }
+                for (MetasetType metasetType : currentMetasetMap) {
                     // any metaset that was not found in the metadata parameter will be deleted.                    
                     metasetService.unlinkMetaset(this, this.fetchMetaset(metasetType.getName())); // somewhat convoluted.
                 }
@@ -628,12 +641,14 @@ public class ObjectSystemData
         log.debug("query for: " + type.getName() + " / osd: " + getId() + " returned #objects: " + metasetList.size());
         if (metasetList.size() == 0) {
             return null;
-        } else if (metasetList.size() > 1) {
+        }
+        else if (metasetList.size() > 1) {
 //            for(OsdMetaset om : metasetList){
 //                log.debug("found OsdMetaset: "+om.toString());
 //            }
             throw new CinnamonConfigurationException("Found two metasets of the same type in osd #" + getId());
-        } else {
+        }
+        else {
             return metasetList.get(0);
         }
     }
@@ -652,7 +667,7 @@ public class ObjectSystemData
         // the correct way would be to use a DAO, but then we are on the way to use Grails
         // GORM anyway, so this is a temporary solution:
         log.debug("persist metaset");
-        em.persist(om);       
+        em.persist(om);
     }
 
     public void setName(String name) {
@@ -901,7 +916,7 @@ public class ObjectSystemData
                 if (withMetadata) {
                     data.add(ParamParser.parseXml(osd.getMetadata(), null));
                 }
-                root.add(data);               
+                root.add(data);
             } catch (CinnamonException ex) {
                 /*
                      * Note: any exceptions encountered here are probably serious bugs,
@@ -913,7 +928,7 @@ public class ObjectSystemData
                 Element error = DocumentHelper.createElement("error").addText(ex.getLocalizedMessage());
                 error.addElement("id").addText(id.toString());
                 root.add(error);
-            }            
+            }
         }
         return doc;
     }
@@ -928,12 +943,13 @@ public class ObjectSystemData
      * Serialize the OSD to a dom4j-Element by name of "object".
      * User data (in lockedBy, owner, creator, modifier), format and object type are added as
      * full elements themselves. All other object references will be included as id, for example:
-     *  <pre>
+     * <pre>
      * {@code
      *  <user><id>453</id><name>foo</name>...</user>
      *  <aclId>1234</aclId>
      * }
      * </pre>
+     *
      * @return the serialized OSD as dom4j-Element
      */
     public Element convertToElement() {
@@ -964,25 +980,29 @@ public class ObjectSystemData
         log.debug("nullChecks");
         if (getContentSize() != null) {
             data.addElement("contentsize").addText(String.valueOf(getContentSize()));
-        } else {
+        }
+        else {
             data.addElement("contentsize");
         }
 
         if (getParent() != null) {
             data.addElement("parentId").addText(String.valueOf(getParent().getId()));
-        } else {
+        }
+        else {
             data.addElement("parentId");
         }
 
         if (getPredecessor() != null) {
             data.addElement("predecessorId").addText(String.valueOf(getPredecessor().getId()));
-        } else {
+        }
+        else {
             data.addElement("predecessorId");
         }
 
         if (getRoot() != null) {
             data.addElement("rootId").addText(String.valueOf(getRoot().getId()));
-        } else {
+        }
+        else {
             data.addElement("rootId"); // TODO: prevent rootId==null on the db level.
         }
 
@@ -994,7 +1014,8 @@ public class ObjectSystemData
         log.debug("lifecycleSection");
         if (getState() == null) {
             data.addElement("lifeCycleState");
-        } else {
+        }
+        else {
             data.addElement("lifeCycleState").addText(String.valueOf(state.getId()));
         }
 
@@ -1126,7 +1147,8 @@ public class ObjectSystemData
             ObjectSystemData lastDescendant;
             if (versions.size() == 0) {
                 throw new NoResultException();
-            } else {
+            }
+            else {
                 lastDescendant = versions.get(0);
             }
             lastDescendantVersion = lastDescendant.getVersion();
@@ -1167,7 +1189,8 @@ public class ObjectSystemData
     public int compareTo(XmlConvertable o) {
         if (getId() > o.getId()) {
             return 1;
-        } else if (getId() < o.getId()) {
+        }
+        else if (getId() < o.getId()) {
             return -1;
         }
         return 0;
@@ -1178,11 +1201,14 @@ public class ObjectSystemData
         String versionPred;
         if (versions == null || versions.length() == 0 || versions.equals("head")) {
             versionPred = " and latesthead=true";
-        } else if (versions.equals("all")) {
+        }
+        else if (versions.equals("all")) {
             versionPred = "";
-        } else if (versions.equals("branch")) {
+        }
+        else if (versions.equals("branch")) {
             versionPred = " and latestbranch=true";
-        } else {
+        }
+        else {
             throw new CinnamonException("error.param.version");
         }
         return versionPred;
@@ -1243,12 +1269,15 @@ public class ObjectSystemData
      * Copy relations of an object if the relationType demands it.
      *
      * @param target for which the new relations will be created.
+     * @param mode determines which flag on the relation type object is checked               
      */
-    public void copyRelations(ObjectSystemData target) {
+    public void copyRelations(ObjectSystemData target, CopyRelationMode mode) {
         EntityManager em = HibernateSession.getLocalEntityManager();
         RelationDAO relationDao = daoFactory.getRelationDAO(em);
         List<Relation> relations = relationDao.findAllByLeftOrRight(this, this);
         for (Relation rel : relations) {
+            RelationType relationType = rel.getType();
+            if (mode.equals(CopyRelationMode.COPY)) {
             /*
              * The relation will only be copied if the cloneOn{left,right}Copy flag is set on the
              * {left,right} part of the osd which is copied.
@@ -1257,18 +1286,33 @@ public class ObjectSystemData
              * will not have a relation to the html file. If the html file is copied, the copy
              * should have a relation to the image.
              */
-            RelationType relationType = rel.getType();
-            if (relationType.getCloneOnLeftCopy() && rel.getLeft().equals(this)) {
-                Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), target, rel.getRight(), rel.getMetadata());
-                log.debug("created new Relation: " + relCopy);
+                
+                if (relationType.getCloneOnLeftCopy() && rel.getLeft().equals(this)) {
+                    Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), target, rel.getRight(), rel.getMetadata());
+                    log.debug("created new Relation: " + relCopy);
+                }
+                if (relationType.getCloneOnRightCopy() && rel.getRight().equals(this)) {
+                    Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), rel.getLeft(), target, rel.getMetadata());
+                    log.debug("created new Relation: " + relCopy);
+                }
             }
-            if (relationType.getCloneOnRightCopy() && rel.getRight().equals(this)) {
-                Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), rel.getLeft(), target, rel.getMetadata());
-                log.debug("created new Relation: " + relCopy);
+            else {
+                if (relationType.getCloneOnLeftVersion() && rel.getLeft().equals(this)) {
+                    Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), target, rel.getRight(), rel.getMetadata());
+                    log.debug("created new Relation: " + relCopy);
+                }
+                if (relationType.getCloneOnRightVersion() && rel.getRight().equals(this)) {
+                    Relation relCopy = relationDao.findOrCreateRelation(rel.getType(), rel.getLeft(), target, rel.getMetadata());
+                    log.debug("created new Relation: " + relCopy);
+                }
             }
         }
     }
 
+    public void copyRelations(ObjectSystemData target){
+        copyRelations(target, CopyRelationMode.COPY);
+    }
+    
     /**
      * Get a new filename for the given osd.
      * First, it filters potentially harmful characters from the object's name. Then,
@@ -1358,11 +1402,11 @@ public class ObjectSystemData
         return metaset;
     }
 
-    public Metaset fetchMetaset(String name, Boolean autocreate){
+    public Metaset fetchMetaset(String name, Boolean autocreate) {
         Metaset metaset = fetchMetaset(name);
-        if( (metaset == null) && autocreate){
+        if ((metaset == null) && autocreate) {
             MetasetService ms = new MetasetService();
-            MetasetTypeDAO mtDao = daoFactory.getMetasetTypeDAO(HibernateSession.getLocalEntityManager());            
+            MetasetTypeDAO mtDao = daoFactory.getMetasetTypeDAO(HibernateSession.getLocalEntityManager());
             metaset = ms.createOrUpdateMetaset(this, mtDao.findByName(name), null, WritePolicy.BRANCH);
         }
         return metaset;
@@ -1469,8 +1513,8 @@ public class ObjectSystemData
             predecessor.setLatestBranch(false);
         }
     }
-    
-    public void updateIndex(){        
+
+    public void updateIndex() {
         EntityManager em = HibernateSession.getLocalEntityManager();
         IndexJobDAO jobDAO = daoFactory.getIndexJobDAO(em);
         IndexJob indexJob = new IndexJob(this);
@@ -1478,31 +1522,31 @@ public class ObjectSystemData
     }
 
     @PostUpdate
-    public void updateIndexOnCommit(){
+    public void updateIndexOnCommit() {
         LocalRepository.addIndexable(this, IndexAction.UPDATE);
     }
-    
+
     @PostPersist
-    public void addToIndexOnCommit(){
+    public void addToIndexOnCommit() {
         LocalRepository.addIndexable(this, IndexAction.ADD);
     }
-    
+
     @PostRemove
-    public void removeFromIndex(){
+    public void removeFromIndex() {
         LocalRepository.addIndexable(this, IndexAction.REMOVE);
     }
-    
+
     @Override
-    public Long myId(){
+    public Long myId() {
         return id;
     }
 
     @Override
-    public Indexable reload(){
+    public Indexable reload() {
         EntityManager em = HibernateSession.getLocalEntityManager();
         ObjectSystemDataDAO oDao = daoFactory.getObjectSystemDataDAO(em);
         ObjectSystemData osd = oDao.get(this.getId());
-        log.debug("osd for "+id+" returned: "+osd);
+        log.debug("osd for " + id + " returned: " + osd);
         return osd;
     }
 
