@@ -174,8 +174,10 @@ public class LifeCycleState implements Serializable {
         if (newState.checkEnteringObject(osd, nextState.getConfig())) {
             newState.enter(osd, nextState.getConfig());
             osd.setState(nextState);
-            AuditService auditService = new AuditService(repository.getAuditConnection());           
-            auditService.insertLogEvent(auditService.createLogEvent(osd, user, oldState, nextState));
+            AuditService auditService = new AuditService(repository.getAuditConnection());
+            LogEvent event = auditService.createLogEvent(osd, user, oldState, nextState);
+            auditService.insertLogEvent(event);
+            event.saveToActionLog();
         }
         else {
             throw new CinnamonException("error.enter.lifecycle");
@@ -194,7 +196,9 @@ public class LifeCycleState implements Serializable {
     public void exitState(ObjectSystemData osd, LifeCycleState nextState, Repository repository, User user) {
         if (nextState == null) {
             AuditService auditService = new AuditService(repository.getAuditConnection());
-            auditService.insertLogEvent(auditService.createLogEvent(osd, user, osd.getState(), null));
+            LogEvent event = auditService.createLogEvent(osd, user, osd.getState(), null);
+            auditService.insertLogEvent(event);
+            event.saveToActionLog();
             return;
         }
 

@@ -1,13 +1,26 @@
 package server.audit;
 
+import org.dom4j.Document;
+import org.dom4j.Element;
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import server.Metaset;
 import server.User;
+import server.dao.DAOFactory;
 import server.data.ObjectSystemData;
+import server.global.Constants;
+import utils.ParamParser;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * 
  */
 public class LogEvent {
+
+    Logger log = LoggerFactory.getLogger(this.getClass());
     
     String repositoryName;
     ObjectSystemData osd;
@@ -151,5 +164,42 @@ public class LogEvent {
             return "";
         }
         return String.valueOf(user.getId());
+    }
+
+    /**
+     * Store this event in the object's action_log metaset.
+     */
+    public void saveToActionLog(){
+        DAOFactory daoFactory = DAOFactory.instance(DAOFactory.HIBERNATE);
+        Metaset actionLog = osd.fetchMetaset(Constants.METASET_ACTION_LOG, false);
+        if(actionLog == null){
+            log.debug("Object "+osd.myId()+" does not have an action_log metaset - do not log.");
+            return;
+        }
+        Date dateTime = new Date(); 
+        Document meta = ParamParser.parseXmlToDocument(actionLog.getContent());
+        Element root = meta.getRootElement();
+        Element event = root.addElement("event");
+        event.addElement("user").addText(String.valueOf(user.getId()));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        event.addElement("dateTime").addText(sdf.format(dateTime));
+        event.addElement("timeStamp").addText(String.valueOf(dateTime.getTime()));
+        nullSafe(event, "fieldName", fieldName);
+        nullSafe(event, "oldValue", oldValue);
+        nullSafe(event, "oldValueName", oldValueName);
+        nullSafe(event, "newValue", newValue);
+        nullSafe(event, "newValueName", newValueName );
+        nullSafe(event, "eventMetadata", metadata);
+        nullSafe(event, "logMessage", logMessage);
+        log.debug("Add action_log entry:\n" + meta.asXML());
+        actionLog.setContent(meta.asXML());
+    }
+    
+    Element nullSafe(Element root, String name, String data){
+        Element newOne = root.addElement(name);
+        if(data != null && data.length() > 0){
+            newOne.addText(data);
+        }
+        return newOne;
     }
 }
