@@ -170,7 +170,6 @@ public class LogEvent {
      * Store this event in the object's action_log metaset.
      */
     public void saveToActionLog(){
-        DAOFactory daoFactory = DAOFactory.instance(DAOFactory.HIBERNATE);
         Metaset actionLog = osd.fetchMetaset(Constants.METASET_ACTION_LOG, false);
         if(actionLog == null){
             log.debug("Object "+osd.myId()+" does not have an action_log metaset - do not log.");
