@@ -143,8 +143,7 @@ public class LifeCycleState implements Serializable {
         try {
             IState newState = stateClass.newInstance();
             return newState.checkEnteringObject(osd, config);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new CinnamonException(ex);
         }
     }
@@ -160,11 +159,9 @@ public class LifeCycleState implements Serializable {
         IState newState;
         try {
             newState = nextState.getStateClass().newInstance();
-        }
-        catch (InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new CinnamonException("error.instantiating.class", e, nextState.getClass().getName());
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new CinnamonException("error.accessing.class", e, nextState.getClass().getName());
         }
 
@@ -177,12 +174,13 @@ public class LifeCycleState implements Serializable {
             AuditService auditService = new AuditService(repository.getAuditConnection());
             LogEvent event = auditService.createLogEvent(osd, user, oldState, nextState);
             auditService.insertLogEvent(event);
-            event.saveToActionLog();
+            if (event != null) {
+                event.saveToActionLog();
+            }
         }
         else {
             throw new CinnamonException("error.enter.lifecycle");
         }
-
     }
 
     /**
@@ -198,18 +196,18 @@ public class LifeCycleState implements Serializable {
             AuditService auditService = new AuditService(repository.getAuditConnection());
             LogEvent event = auditService.createLogEvent(osd, user, osd.getState(), null);
             auditService.insertLogEvent(event);
-            event.saveToActionLog();
+            if (event != null) {
+                event.saveToActionLog();
+            }
             return;
         }
 
         IState state;
         try {
             state = stateClass.newInstance();
-        }
-        catch (InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new CinnamonException("error.instantiating.class", e, stateClass.getName());
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new CinnamonException("error.accessing.class", e, stateClass.getName());
         }
 
@@ -217,11 +215,9 @@ public class LifeCycleState implements Serializable {
         try {
             IState nextStateInstance = nextStateClass.newInstance();
             state.exit(osd, nextStateInstance, config);
-        }
-        catch (InstantiationException e) {
+        } catch (InstantiationException e) {
             throw new CinnamonException("error.instantiating.class", e, nextStateClass.getName());
-        }
-        catch (IllegalAccessException e) {
+        } catch (IllegalAccessException e) {
             throw new CinnamonException("error.accessing.class", e, nextStateClass.getName());
         }
     }
