@@ -980,8 +980,8 @@ public class Folder
     @Override
     public Indexable reload(){
         EntityManager em = HibernateSession.getLocalEntityManager();
-        FolderDAO fDao = daoFactory.getFolderDAO(em);
-        return fDao.get(this.getId());
+        em.refresh(this);
+        return this;
     }
 
     @Override

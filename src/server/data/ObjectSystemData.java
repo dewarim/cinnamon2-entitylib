@@ -1542,12 +1542,10 @@ public class ObjectSystemData
     }
 
     @Override
-    public Indexable reload() {
+    public Indexable reload() {        
         EntityManager em = HibernateSession.getLocalEntityManager();
-        ObjectSystemDataDAO oDao = daoFactory.getObjectSystemDataDAO(em);
-        ObjectSystemData osd = oDao.get(this.getId());
-        log.debug("osd for " + id + " returned: " + osd);
-        return osd;
+        em.refresh(this);
+        return this;
     }
 
     @Override
