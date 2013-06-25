@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import server.dao.ChangeTriggerTypeDAO;
 import server.dao.DAOFactory;
 import server.global.Constants;
-import server.trigger.ChangeTriggerType;
 import utils.HibernateSession;
 import utils.ParamParser;
 
@@ -67,6 +66,16 @@ public class ChangeTrigger implements Serializable {
     @Column(name = "post_trigger",
             nullable = false)
     private Boolean postTrigger = false;
+
+    /**
+     * This change trigger will be run in its own transaction,
+     * after the main work of handling the request is done.
+     * It may still alter the output.
+     * It has to refresh all database objects it wants to access.
+     */
+    @Column(name = "after_work",
+            nullable = false)
+    private Boolean afterWork = false;
 
     @Column(name = "config",
             length = Constants.METADATA_SIZE,
@@ -235,6 +244,14 @@ public class ChangeTrigger implements Serializable {
         }
     }
 
+    public Boolean getAfterWork() {
+        return afterWork;
+    }
+
+    public void setAfterWork(Boolean afterWorkTrigger) {
+        this.afterWork = afterWorkTrigger;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -246,6 +263,7 @@ public class ChangeTrigger implements Serializable {
         if (command != null ? !command.equals(that.command) : that.command != null) return false;
         if (postTrigger != null ? !postTrigger.equals(that.postTrigger) : that.postTrigger != null) return false;
         if (preTrigger != null ? !preTrigger.equals(that.preTrigger) : that.preTrigger != null) return false;
+        if (afterWork != null ? !afterWork.equals(that.afterWork) : that.afterWork != null) return false;
         if (ranking != null ? !ranking.equals(that.ranking) : that.ranking != null) return false;
         if (config != null ? !config.equals(that.config) : that.config != null) return false;
         if (triggerType != null ? !triggerType.equals(that.triggerType) : that.triggerType != null) return false;

@@ -62,8 +62,12 @@ import server.index.IndexJob;
 			),
 			@NamedQuery(
 					name = "findAllChangeTriggersByCommandAndPostAndActiveOrderByRanking",
-					query = "select c from server.trigger.ChangeTrigger c where c.command=:command and c.postTrigger=true and c.active=true order by c.ranking"
+					query = "select c from server.trigger.ChangeTrigger c where c.command=:command and c.postTrigger=true and c.active=true and c.afterWork=false order by c.ranking"
 			),
+                @NamedQuery(
+                        name = "findAllChangeTriggersByCommandAndActiveAndAfterWorkOrderByRanking",
+                        query = "select c from server.trigger.ChangeTrigger c where c.command=:command and c.active=true and c.afterWork=true order by c.ranking"
+                ),
 			@NamedQuery(
 					name = "findAllChangeTriggersByCommandAndPreAndActiveOrderByRanking",
 					query = "select c from server.trigger.ChangeTrigger c where c.command=:command and c.preTrigger=true and c.active=true order by c.ranking"

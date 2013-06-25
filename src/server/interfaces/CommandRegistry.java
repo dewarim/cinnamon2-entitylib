@@ -15,5 +15,6 @@ public interface CommandRegistry {
 	void registerAPI(Map<String,MethodContainer> commands);
 	Response invoke(String command, Map<String, Object> params,
 			HttpServletResponse res, User user, Repository repository);
-	
+	Response executeAfterWorkTriggers(String command, Map<String, Object> params,
+                                      HttpServletResponse res, User user, Repository repository, Response response);
 }

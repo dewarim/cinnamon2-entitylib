@@ -9,4 +9,5 @@ public interface ChangeTriggerDAO extends GenericDAO<ChangeTrigger, Long> {
 	
 	List<ChangeTrigger> findAllByCommandAndPreAndActiveOrderByRanking(String command);
 	List<ChangeTrigger> findAllByCommandAndPostAndActiveOrderByRanking(String command);
+	List<ChangeTrigger> findAllByCommandAndActiveAndAfterWorkOrderByRanking(String command);
 }

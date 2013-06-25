@@ -35,6 +35,15 @@ public class ChangeTriggerDAOHibernate  extends GenericHibernateDAO<ChangeTrigge
 
 	@SuppressWarnings("unchecked")
 	@Override
+	public List<ChangeTrigger> findAllByCommandAndActiveAndAfterWorkOrderByRanking(String command) {
+		Query q = getSession().createNamedQuery("findAllChangeTriggersByCommandAndActiveAndAfterWorkOrderByRanking");
+		q.setParameter("command", command);
+		return q.getResultList();
+		
+	}
+    
+	@SuppressWarnings("unchecked")
+	@Override
 	public List<ChangeTrigger> findAllByCommandAndPostAndActiveOrderByRanking(String command) {
 		Query q = getSession().createNamedQuery("findAllChangeTriggersByCommandAndPostAndActiveOrderByRanking");
 		q.setParameter("command", command);
