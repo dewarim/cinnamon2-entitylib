@@ -30,8 +30,8 @@ import java.io.Serializable;
 
 /**
  * Member is the intermediate class to associate users and groups.
+ *
  * @author ingo
- * 
  */
 
 @Entity
@@ -40,33 +40,33 @@ public class OsdMetaset implements Serializable, IMetasetJoin {
 
     private transient Logger log = LoggerFactory.getLogger(this.getClass());
 
-	/**
-	 *
-	 */
-	private static final long	serialVersionUID	= 1L;
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-	@Id
+    @Id
     @GeneratedValue
-	@Column(name = "id")
-	private long id;
+    @Column(name = "id")
+    private long id;
 
-	@ManyToOne
-	@JoinColumn(name = "osd_id",
-				nullable = false)
-	private ObjectSystemData osd;
+    @ManyToOne
+    @JoinColumn(name = "osd_id",
+            nullable = false)
+    private ObjectSystemData osd;
 
-	@ManyToOne()
-	@JoinColumn(name = "metaset_id",
-			nullable = false)
-	private Metaset metaset;
+    @ManyToOne
+    @JoinColumn(name = "metaset_id",            
+            nullable = false)
+    private Metaset metaset;
 
-	@Version
-	@Column(name="obj_version")
-	@SuppressWarnings("unused")
-	private Long obj_version = 0L;
+    @Version
+    @Column(name = "obj_version")
+    @SuppressWarnings("unused")
+    private Long obj_version = 0L;
 
-	public OsdMetaset(){
-	}
+    public OsdMetaset() {
+    }
 
     public OsdMetaset(ObjectSystemData osd, Metaset metaset) {
         this.osd = osd;
@@ -75,18 +75,18 @@ public class OsdMetaset implements Serializable, IMetasetJoin {
         metaset.getOsdMetasets().add(this);
     }
 
-	public String toString(){
-		return "OsdMetaset: "+id+" OSD: "+osd.getId()+" Metaset: "+metaset.getId();
-	}
-	
-	public long getId() {
-		return id;
-	}
+    public String toString() {
+        return "OsdMetaset: " + id + " OSD: " + osd.getId() + " Metaset: " + metaset.getId();
+    }
 
-	@SuppressWarnings("unused")
-	private void setId(long id) {
-		this.id = id;
-	}
+    public long getId() {
+        return id;
+    }
+
+    @SuppressWarnings("unused")
+    private void setId(long id) {
+        this.id = id;
+    }
 
     public ObjectSystemData getOsd() {
         return osd;
@@ -104,12 +104,11 @@ public class OsdMetaset implements Serializable, IMetasetJoin {
         this.metaset = metaset;
     }
 
-    public void doDelete(){
-        metaset.getOsdMetasets().remove(this);
+    public void doDelete() {  
         osd.getOsdMetasets().remove(this);
-        EntityManager em = HibernateSession.getLocalEntityManager();
+        metaset.getOsdMetasets().remove(this);
+        EntityManager em = HibernateSession.getLocalEntityManager();        
         em.remove(this);
-        em.flush();
     }
 
     @Override

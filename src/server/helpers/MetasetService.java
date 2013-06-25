@@ -18,6 +18,7 @@ import utils.ParamParser;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -101,15 +102,15 @@ public class MetasetService {
         EntityManager em = HibernateSession.getLocalEntityManager();
 
         // fetch OsdMetasets and FolderMetasets:
-        Query osdQuery = em.createQuery("select o from OsdMetaset o where o.metaset=:metaset");
+        TypedQuery<IMetasetOwner> osdQuery = em.createQuery("select o.osd from OsdMetaset o where o.metaset=:metaset", IMetasetOwner.class);
         osdQuery.setParameter("metaset", metaset);
         List<IMetasetOwner> osdMetasets = osdQuery.getResultList();
-        Query folderQuery = em.createQuery("select fm from FolderMetaset fm where fm.metaset=:metaset");
+        TypedQuery<IMetasetOwner> folderQuery = em.createQuery("select fm.folder from FolderMetaset fm where fm.metaset=:metaset", IMetasetOwner.class);
         folderQuery.setParameter("metaset", metaset);
 
         // combine collections:
         List<IMetasetOwner> folderMetasets = folderQuery.getResultList();
-        List<IMetasetOwner> owners = new ArrayList<IMetasetOwner>(osdMetasets.size() + folderMetasets.size());
+        List<IMetasetOwner> owners = new ArrayList<>(osdMetasets.size() + folderMetasets.size());
         owners.addAll(folderMetasets);
         owners.addAll(osdMetasets);
         return owners;
@@ -118,13 +119,27 @@ public class MetasetService {
     public void unlinkMetaset(IMetasetOwner owner, Metaset metaset) {
         EntityManager em = HibernateSession.getLocalEntityManager();
         IMetasetJoin metasetJoin = owner.fetchMetasetJoin(metaset.getType());
-        metasetJoin.doDelete();
-        Collection<IMetasetOwner> metasetOwners = fetchOwners(metaset);
-        if (metasetOwners.size() == 0) {
-            // if nothing links to this metaset, delete it.
+        log.debug("remove metasetJoin "+metasetJoin.getId()+" for object "+owner.toString()+" with id "+owner.getId());
+        if(fetchOwners(metaset).size() == 1){
+            metaset.getOsdMetasets().clear();
+            metaset.getFolderMetasets().clear();            
             em.remove(metaset);
         }
-
+        metasetJoin.doDelete();
+//        metasetJoin.doDelete();
+//        if (metasetOwners.size() <= 1) {
+//            // if nothing links to this metaset, delete it.
+//            // also, if metasetOwners.size == 1 and we just deleted a metasetJoin,
+//            // it's safe to assume that the metaset would now be orphaned. 
+//            log.debug("Remove Metaset "+metaset.getId()+" - it's no longer used.");
+//            em.remove(metaset);
+//        }
+//        else{
+//            log.debug("Keeping Metaset "+metaset.getId()+", it's still in use.");
+//            for(IMetasetOwner currentOwner:metasetOwners){
+//                log.debug("CurrentOwner: "+currentOwner);
+//            }
+//        }
     }
 
     public Metaset createOrUpdateMetaset(IMetasetOwner owner, MetasetType metasetType, String content, WritePolicy writePolicy) {

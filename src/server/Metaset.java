@@ -65,13 +65,13 @@ public class Metaset implements Serializable {
             mappedBy = "metaset",
             cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
     )
-    private Set<OsdMetaset> osdMetasets = new HashSet<OsdMetaset>();
+    private Set<OsdMetaset> osdMetasets = new HashSet<>();
 
     @OneToMany(
             mappedBy = "metaset",
             cascade = {CascadeType.PERSIST, CascadeType.REMOVE}
     )
-    private Set<FolderMetaset> folderMetasets = new HashSet<FolderMetaset>();
+    private Set<FolderMetaset> folderMetasets = new HashSet<>();
 
 
     public Metaset() {

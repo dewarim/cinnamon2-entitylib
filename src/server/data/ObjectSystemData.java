@@ -634,7 +634,7 @@ public class ObjectSystemData
 
     public IMetasetJoin fetchMetasetJoin(MetasetType type) {
         EntityManager em = HibernateSession.getLocalEntityManager();
-        Query q = em.createQuery("select o from OsdMetaset o where o.metaset.type=:metasetType and o.osd=:osd");
+        TypedQuery<OsdMetaset> q = em.createQuery("select o from OsdMetaset o where o.metaset.type=:metasetType and o.osd=:osd", OsdMetaset.class);
         q.setParameter("metasetType", type);
         q.setParameter("osd", this);
         List<OsdMetaset> metasetList = q.getResultList();
@@ -643,9 +643,6 @@ public class ObjectSystemData
             return null;
         }
         else if (metasetList.size() > 1) {
-//            for(OsdMetaset om : metasetList){
-//                log.debug("found OsdMetaset: "+om.toString());
-//            }
             throw new CinnamonConfigurationException("Found two metasets of the same type in osd #" + getId());
         }
         else {
@@ -664,9 +661,7 @@ public class ObjectSystemData
 
         OsdMetaset om = new OsdMetaset(this, metaset);
         EntityManager em = HibernateSession.getLocalEntityManager();
-        // the correct way would be to use a DAO, but then we are on the way to use Grails
-        // GORM anyway, so this is a temporary solution:
-        log.debug("persist metaset");
+        log.debug("persist metaset "+metaset.getType().getName());
         em.persist(om);
     }
 

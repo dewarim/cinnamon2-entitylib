@@ -110,7 +110,6 @@ public class FolderMetaset implements Serializable, IMetasetJoin {
         folder.getFolderMetasets().remove(this);
         EntityManager em = HibernateSession.getLocalEntityManager();
         em.remove(this);
-        em.flush();
     }
 
     @Override
